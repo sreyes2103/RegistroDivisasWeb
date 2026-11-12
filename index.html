@@ -12,22 +12,29 @@
         <h1>Control de Divisas y Deudas</h1>
         
         <!-- Formulario para ingresar nuevos datos -->
+        <!-- Formulario para ingresar nuevos datos -->
         <form id="formulario">
-            <label for="contacto">Contacto:</label>
-            <input type="text" id="contacto" placeholder="Ej. Proveedor Refri Pharma" required>
+            <label for="contacto">Contacto / Amistad:</label>
+            <input type="text" id="contacto" placeholder="Ej. Juan Pérez" required>
 
             <label for="telefono">Teléfono:</label>
             <input type="tel" id="telefono" placeholder="0414-1234567" required>
 
             <label for="monto">Monto (Divisas):</label>
-            <input type="number" id="monto" placeholder="Ej. 150.00" step="0.01" required>
+            <input type="number" id="monto" placeholder="Ej. 50.00" step="0.01" required>
 
             <label for="estado">Estado:</label>
             <select id="estado">
+                <option value="Pendiente por retirar">Pendiente por retirar</option>
                 <option value="Me debe">Me debe</option>
                 <option value="Pagado">Pagado</option>
-                <option value="Por cobrar">Por cobrar</option>
             </select>
+
+            <label for="fecha">Fecha:</label>
+            <input type="date" id="fecha" required>
+
+            <label for="ubicacion">Ubicación:</label>
+            <input type="text" id="ubicacion" placeholder="Ej. Coro, Centro" required>
 
             <button type="submit">Guardar Registro</button>
         </form>
@@ -42,6 +49,6 @@
     </div>
 
     <!-- Conectamos el archivo de programación -->
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>
