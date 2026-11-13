@@ -45,14 +45,22 @@ formulario.addEventListener('submit', async (e) => {
     }
 });
 
-// 4. Función para LEER registros en tiempo real
+// 4. Función para LEER registros en tiempo real y SUMAR totales
 const listaRegistros = document.getElementById('lista-registros');
+const totalPendienteDOM = document.getElementById('total-pendiente');
+
 onSnapshot(collection(db, "registros"), (querySnapshot) => {
     listaRegistros.innerHTML = ''; 
+    let totalAcumulado = 0; // Iniciar la calculadora en cero
     
     querySnapshot.forEach((documento) => {
         const dato = documento.data();
         const id = documento.id; 
+        
+        // Sumar al total SOLO si el estado no es "Pagado"
+        if (dato.estado !== "Pagado") {
+            totalAcumulado += parseFloat(dato.monto);
+        }
         
         // Limpieza de número para WhatsApp
         let numLimpio = dato.telefono.replace(/[- ]/g, ""); 
@@ -73,6 +81,11 @@ onSnapshot(collection(db, "registros"), (querySnapshot) => {
             </div>
         `;
     });
+
+    // Mostrar el resultado final en la pantalla con dos decimales
+    if (totalPendienteDOM) {
+        totalPendienteDOM.innerText = totalAcumulado.toFixed(2);
+    }
 });
 
 // 5. Función para BORRAR registros
