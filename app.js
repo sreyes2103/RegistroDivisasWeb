@@ -25,17 +25,15 @@ onSnapshot(collection(db, "registros"), (querySnapshot) => {
     querySnapshot.forEach((doc) => {
         const dato = doc.data();
         
-        // Creamos una estructura visual (tarjeta) para cada registro
+      // Creamos una estructura visual (tarjeta) para cada registro
         listaRegistros.innerHTML += `
-            <div class="tarjeta-registro" style="margin-bottom: 15px; border-bottom: 1px solid #ccc; padding-bottom: 10px;">
-                <h3 style="margin: 0;">${dato.contacto}</h3>
-                <p style="margin: 5px 0;"><strong>Monto:</strong> $${dato.monto} | <strong>Estado:</strong> ${dato.estado}</p>
-                <p style="margin: 5px 0;"><strong>Teléfono:</strong> ${dato.telefono}</p>
-                <p style="margin: 5px 0;"><strong>Fecha:</strong> ${dato.fecha} | <strong>Ubicación:</strong> ${dato.ubicacion}</p>
+            <div class="tarjeta-registro">
+                <h3>${dato.contacto}</h3>
+                <p><strong>Monto:</strong> $${dato.monto} | <strong>Estado:</strong> ${dato.estado}</p>
+                <p><strong>Teléfono:</strong> ${dato.telefono}</p>
+                <p><strong>Fecha:</strong> ${dato.fecha} | <strong>Ubicación:</strong> ${dato.ubicacion}</p>
             </div>
         `;
-    });
-});
 // 4. Programar el botón de Guardar
 const formulario = document.getElementById('formulario');
 
