@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // 1. Tus llaves de acceso a Firebase
 const firebaseConfig = {
@@ -51,21 +51,24 @@ const totalPendienteDOM = document.getElementById('total-pendiente');
 
 onSnapshot(collection(db, "registros"), (querySnapshot) => {
     listaRegistros.innerHTML = ''; 
-    let totalAcumulado = 0; // Iniciar la calculadora en cero
+    let totalAcumulado = 0; 
     
     querySnapshot.forEach((documento) => {
         const dato = documento.data();
         const id = documento.id; 
         
-        // Sumar al total SOLO si el estado no es "Pagado"
         if (dato.estado !== "Pagado") {
             totalAcumulado += parseFloat(dato.monto);
         }
         
-        // Limpieza de número para WhatsApp
         let numLimpio = dato.telefono.replace(/[- ]/g, ""); 
         if(numLimpio.startsWith("0")) numLimpio = numLimpio.substring(1);
         const enlaceWa = `https://wa.me/58${numLimpio}`;
+        
+        // Creamos el botón de Pagado SOLO si aún debe dinero
+        const botonPagado = dato.estado !== "Pagado" 
+            ? `<button class="btn-pagado" data-id="${id}" style="flex: 1; margin-top: 0; background-color: #3b82f6; padding: 8px; font-size: 0.9rem;">✅ Pagado</button>` 
+            : '';
         
         listaRegistros.innerHTML += `
             <div class="tarjeta-registro">
@@ -74,14 +77,19 @@ onSnapshot(collection(db, "registros"), (querySnapshot) => {
                 <p><strong>Fecha:</strong> ${dato.fecha} | <strong>Ubicación:</strong> ${dato.ubicacion}</p>
                 
                 <!-- Botones de acción -->
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <a href="${enlaceWa}" target="_blank" style="flex: 1; background-color: #25D366; color: white; text-align: center; padding: 10px; text-decoration: none; border-radius: 6px; font-weight: bold;">📲 WhatsApp</a>
-                    <button class="btn-borrar" data-id="${id}" style="flex: 1; margin-top: 0; background-color: #ef4444; padding: 10px;">🗑️ Borrar</button>
+                <div style="display: flex; gap: 8px; margin-top: 15px;">
+                    <a href="${enlaceWa}" target="_blank" style="flex: 1; background-color: #25D366; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">📲 WhatsApp</a>
+                    ${botonPagado}
+                    <button class="btn-borrar" data-id="${id}" style="flex: 1; margin-top: 0; background-color: #ef4444; padding: 8px; font-size: 0.9rem;">🗑️ Borrar</button>
                 </div>
             </div>
         `;
     });
 
+    if (totalPendienteDOM) {
+        totalPendienteDOM.innerText = totalAcumulado.toFixed(2);
+    }
+});
     // Mostrar el resultado final en la pantalla con dos decimales
     if (totalPendienteDOM) {
         totalPendienteDOM.innerText = totalAcumulado.toFixed(2);
@@ -99,6 +107,23 @@ listaRegistros.addEventListener('click', async (e) => {
             } catch (error) {
                 console.error("Error al borrar:", error);
                 alert("No se pudo borrar el registro.");
+            }
+        }
+    }
+});
+// 6. Función para MARCAR COMO PAGADO
+listaRegistros.addEventListener('click', async (e) => {
+    if (e.target.classList.contains('btn-pagado')) {
+        const idRegistro = e.target.getAttribute('data-id');
+        
+        if (confirm("¿Confirmas que esta persona ya te pagó?")) {
+            try {
+                await updateDoc(doc(db, "registros", idRegistro), {
+                    estado: "Pagado"
+                });
+            } catch (error) {
+                console.error("Error al actualizar:", error);
+                alert("No se pudo actualizar el registro.");
             }
         }
     }
