@@ -1,6 +1,6 @@
 // 1. Importar Firebase desde internet
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // 2. Tus llaves de acceso a Firebase
 const firebaseConfig = {
@@ -15,7 +15,27 @@ const firebaseConfig = {
 // 3. Inicializar Firebase y la Base de Datos
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+// 4. Leer y mostrar los registros en tiempo real
+const listaRegistros = document.getElementById('lista-registros');
 
+// onSnapshot escucha los cambios en la base de datos instantáneamente
+onSnapshot(collection(db, "registros"), (querySnapshot) => {
+    listaRegistros.innerHTML = ''; // Limpia el texto de "No hay registros todavía"
+    
+    querySnapshot.forEach((doc) => {
+        const dato = doc.data();
+        
+        // Creamos una estructura visual (tarjeta) para cada registro
+        listaRegistros.innerHTML += `
+            <div class="tarjeta-registro" style="margin-bottom: 15px; border-bottom: 1px solid #ccc; padding-bottom: 10px;">
+                <h3 style="margin: 0;">${dato.contacto}</h3>
+                <p style="margin: 5px 0;"><strong>Monto:</strong> $${dato.monto} | <strong>Estado:</strong> ${dato.estado}</p>
+                <p style="margin: 5px 0;"><strong>Teléfono:</strong> ${dato.telefono}</p>
+                <p style="margin: 5px 0;"><strong>Fecha:</strong> ${dato.fecha} | <strong>Ubicación:</strong> ${dato.ubicacion}</p>
+            </div>
+        `;
+    });
+});
 // 4. Programar el botón de Guardar
 const formulario = document.getElementById('formulario');
 
