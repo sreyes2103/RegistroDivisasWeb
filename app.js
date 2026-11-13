@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // 1. Tus llaves de acceso a Firebase
 const firebaseConfig = {
@@ -57,17 +57,19 @@ onSnapshot(collection(db, "registros"), (querySnapshot) => {
         const dato = documento.data();
         const id = documento.id; 
         
+        // Sumar solo si no está pagado
         if (dato.estado !== "Pagado") {
             totalAcumulado += parseFloat(dato.monto);
         }
         
+        // Preparar número de WhatsApp
         let numLimpio = dato.telefono.replace(/[- ]/g, ""); 
         if(numLimpio.startsWith("0")) numLimpio = numLimpio.substring(1);
         const enlaceWa = `https://wa.me/58${numLimpio}`;
         
-        // Creamos el botón de Pagado SOLO si aún debe dinero
+        // Botón de pagado (solo aparece si debe)
         const botonPagado = dato.estado !== "Pagado" 
-            ? `<button class="btn-pagado" data-id="${id}" style="flex: 1; margin-top: 0; background-color: #3b82f6; padding: 8px; font-size: 0.9rem;">✅ Pagado</button>` 
+            ? `<button class="btn-pagado" data-id="${id}" style="flex: 1; margin-top: 0; background-color: #3b82f6; color: white; border: none; border-radius: 6px; padding: 8px; font-size: 0.9rem; cursor: pointer;">✅ Pagado</button>` 
             : '';
         
         listaRegistros.innerHTML += `
@@ -80,17 +82,12 @@ onSnapshot(collection(db, "registros"), (querySnapshot) => {
                 <div style="display: flex; gap: 8px; margin-top: 15px;">
                     <a href="${enlaceWa}" target="_blank" style="flex: 1; background-color: #25D366; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">📲 WhatsApp</a>
                     ${botonPagado}
-                    <button class="btn-borrar" data-id="${id}" style="flex: 1; margin-top: 0; background-color: #ef4444; padding: 8px; font-size: 0.9rem;">🗑️ Borrar</button>
+                    <button class="btn-borrar" data-id="${id}" style="flex: 1; margin-top: 0; background-color: #ef4444; color: white; border: none; border-radius: 6px; padding: 8px; font-size: 0.9rem; cursor: pointer;">🗑️ Borrar</button>
                 </div>
             </div>
         `;
     });
 
-    if (totalPendienteDOM) {
-        totalPendienteDOM.innerText = totalAcumulado.toFixed(2);
-    }
-});
-    // Mostrar el resultado final en la pantalla con dos decimales
     if (totalPendienteDOM) {
         totalPendienteDOM.innerText = totalAcumulado.toFixed(2);
     }
@@ -106,11 +103,11 @@ listaRegistros.addEventListener('click', async (e) => {
                 await deleteDoc(doc(db, "registros", idRegistro));
             } catch (error) {
                 console.error("Error al borrar:", error);
-                alert("No se pudo borrar el registro.");
             }
         }
     }
 });
+
 // 6. Función para MARCAR COMO PAGADO
 listaRegistros.addEventListener('click', async (e) => {
     if (e.target.classList.contains('btn-pagado')) {
@@ -123,7 +120,6 @@ listaRegistros.addEventListener('click', async (e) => {
                 });
             } catch (error) {
                 console.error("Error al actualizar:", error);
-                alert("No se pudo actualizar el registro.");
             }
         }
     }
