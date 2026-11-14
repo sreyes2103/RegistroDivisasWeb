@@ -39,11 +39,14 @@
         <!-- Formulario para ingresar nuevos datos -->
         <!-- Formulario para ingresar nuevos datos -->
         <form id="formulario">
-            <label for="contacto">Contacto / Amistad:</label>
-            <input type="text" id="contacto" placeholder="Ej. Juan Pérez" required>
-
-            <label for="telefono">Teléfono:</label>
-            <input type="tel" id="telefono" placeholder="0414-1234567" required>
+                <label for="contacto">Contacto / Amistad:</label>
+                <!-- Agregamos el list="sugerencias-contactos" aquí -->
+                <input type="text" id="contacto" placeholder="Ej. Juan Pérez" list="sugerencias-contactos" required>
+                <!-- Esta etiqueta invisible guardará los nombres -->
+                <datalist id="sugerencias-contactos"></datalist>
+    
+                <label for="telefono">Teléfono:</label>
+                <input type="tel" id="telefono" placeholder="0414-1234567" required>
 
             <label for="monto">Monto (Divisas):</label>
             <input type="number" id="monto" placeholder="Ej. 50.00" step="0.01" required>

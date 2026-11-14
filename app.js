@@ -78,13 +78,17 @@ formulario.addEventListener('submit', async (e) => {
     }
 });
 
-// 4. Función para LEER registros en tiempo real y SUMAR totales
+// 4. Función para LEER registros en tiempo real, SUMAR y CREAR DIRECTORIO
 const listaRegistros = document.getElementById('lista-registros');
 const totalPendienteDOM = document.getElementById('total-pendiente');
+const datalistContactos = document.getElementById('sugerencias-contactos');
 
 onSnapshot(collection(db, "registros"), (querySnapshot) => {
     listaRegistros.innerHTML = ''; 
     let totalAcumulado = 0; 
+    
+    const directorio = {}; // Memoria temporal para guardar los datos únicos del vendedor
+    let htmlSugerencias = ''; 
     
     querySnapshot.forEach((documento) => {
         const dato = documento.data();
@@ -95,12 +99,19 @@ onSnapshot(collection(db, "registros"), (querySnapshot) => {
             totalAcumulado += parseFloat(dato.monto);
         }
         
-        // Preparar número de WhatsApp
+        // Guardar en el directorio (Si el vendedor no está guardado aún, lo añade a la lista)
+        if (!directorio[dato.contacto]) {
+            directorio[dato.contacto] = {
+                telefono: dato.telefono,
+                ubicacion: dato.ubicacion
+            };
+            htmlSugerencias += `<option value="${dato.contacto}">`;
+        }
+        
         let numLimpio = dato.telefono.replace(/[- ]/g, ""); 
         if(numLimpio.startsWith("0")) numLimpio = numLimpio.substring(1);
         const enlaceWa = `https://wa.me/58${numLimpio}`;
         
-        // Botón de pagado (solo aparece si debe)
         const botonPagado = dato.estado !== "Pagado" 
             ? `<button class="btn-pagado" data-id="${id}" style="flex: 1; margin-top: 0; background-color: #3b82f6; color: white; border: none; border-radius: 6px; padding: 8px; font-size: 0.9rem; cursor: pointer;">✅ Pagado</button>` 
             : '';
@@ -111,7 +122,6 @@ onSnapshot(collection(db, "registros"), (querySnapshot) => {
                 <p><strong>Monto:</strong> $${dato.monto} | <strong>Estado:</strong> ${dato.estado}</p>
                 <p><strong>Fecha:</strong> ${dato.fecha} | <strong>Ubicación:</strong> ${dato.ubicacion}</p>
                 
-                <!-- Botones de acción -->
                 <div style="display: flex; gap: 8px; margin-top: 15px;">
                     <a href="${enlaceWa}" target="_blank" style="flex: 1; background-color: #25D366; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">📲 WhatsApp</a>
                     ${botonPagado}
@@ -121,11 +131,12 @@ onSnapshot(collection(db, "registros"), (querySnapshot) => {
         `;
     });
 
-    if (totalPendienteDOM) {
-        totalPendienteDOM.innerText = totalAcumulado.toFixed(2);
-    }
+    if (totalPendienteDOM) totalPendienteDOM.innerText = totalAcumulado.toFixed(2);
+    if (datalistContactos) datalistContactos.innerHTML = htmlSugerencias;
+    
+    // Guardar el directorio de forma global para usarlo al escribir
+    window.directorioContactos = directorio;
 });
-
 // 5. Función para BORRAR registros
 listaRegistros.addEventListener('click', async (e) => {
     if (e.target.classList.contains('btn-borrar')) {
@@ -155,5 +166,19 @@ listaRegistros.addEventListener('click', async (e) => {
                 console.error("Error al actualizar:", error);
             }
         }
+    }
+});
+// 7. Función para AUTO-COMPLETAR datos de vendedores frecuentes
+const inputContacto = document.getElementById('contacto');
+const inputTelefono = document.getElementById('telefono');
+const inputUbicacion = document.getElementById('ubicacion');
+
+inputContacto.addEventListener('input', (e) => {
+    const nombreEscrito = e.target.value;
+    
+    // Si el nombre escrito coincide con uno guardado, llenamos el resto automáticamente
+    if (window.directorioContactos && window.directorioContactos[nombreEscrito]) {
+        inputTelefono.value = window.directorioContactos[nombreEscrito].telefono;
+        inputUbicacion.value = window.directorioContactos[nombreEscrito].ubicacion;
     }
 });
