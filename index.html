@@ -8,8 +8,33 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="contenedor">
-        <h1>Control de Divisas y Deudas</h1>
+    <!-- PANTALLA DE SELECCIÓN -->
+    <div id="pantalla-seleccion" class="contenedor-bienvenida">
+        <h1>Refri Pharma</h1>
+        <p style="font-size: 1.2rem; color: #475569; margin-bottom: 30px;">¿Qué deseas registrar?</p>
+        
+        <div class="opciones-menu">
+            <div class="tarjeta-opcion" id="btn-compra">
+                <span class="icono-opcion">💵</span>
+                <h3>Compra de Efectivo</h3>
+            </div>
+            
+            <div class="tarjeta-opcion" id="btn-prestamo">
+                <span class="icono-opcion">🤝</span>
+                <h3>Préstamo</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- APLICACIÓN PRINCIPAL (Oculta al inicio) -->
+    <div id="app-principal" style="display: none;">
+        <div class="contenedor">
+            <!-- Botón para regresar al menú -->
+            <button id="btn-volver" style="background-color: #64748b; margin-bottom: 20px; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem;">⬅ Volver al menú</button>
+            
+            <h1>Agrega los datos del vendedor</h1>
+            
+            <!-- (AQUÍ DEBE ESTAR TU FORMULARIO INTACTO) -->
         
         <!-- Formulario para ingresar nuevos datos -->
         <!-- Formulario para ingresar nuevos datos -->
@@ -51,8 +76,21 @@
             <p>No hay registros todavía.</p>
         </div>
     </div>
-
-    <!-- Conectamos el archivo de programación -->
-    <script type="module" src="app.js"></script>
-</body>
+</div> <!-- Este es el cierre de app-principal -->
+ <!-- SECCIÓN DE PRÉSTAMOS (En blanco por ahora) -->
+        <div id="app-prestamo" style="display: none;">
+            <div class="contenedor">
+                <button id="btn-volver-prestamo" style="background-color: #64748b; margin-bottom: 20px; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem;">⬅ Volver al menú</button>
+                
+                <h1>Control de Préstamos</h1>
+                <div style="background-color: white; padding: 40px 20px; border-radius: 8px; text-align: center; margin-top: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <span style="font-size: 3rem;">🚧</span>
+                    <h3 style="color: #475569; margin-top: 15px;">Sección en construcción</h3>
+                    <p style="color: #64748b;">Trabajaremos en este módulo más adelante.</p>
+                </div>
+            </div>
+        </div>       
+        <!-- Conectamos el archivo de programación -->
+        <script type="module" src="app.js"></script>
+    </body>
 </html>

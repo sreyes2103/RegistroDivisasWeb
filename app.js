@@ -14,7 +14,40 @@ const firebaseConfig = {
 // 2. Inicializar Firebase y la Base de Datos
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+// --- SISTEMA DE NAVEGACIÓN Y MENÚ ---
+const pantallaSeleccion = document.getElementById('pantalla-seleccion');
+const appPrincipal = document.getElementById('app-principal'); // Pantalla de Compra
+const appPrestamo = document.getElementById('app-prestamo');   // Pantalla de Préstamo en blanco
+const btnCompra = document.getElementById('btn-compra');
+const btnPrestamo = document.getElementById('btn-prestamo');
+const btnVolver = document.getElementById('btn-volver');
+const btnVolverPrestamo = document.getElementById('btn-volver-prestamo');
+const estadoSelect = document.getElementById('estado');
 
+// Al tocar Compra de Efectivo
+btnCompra.addEventListener('click', () => {
+    pantallaSeleccion.style.display = 'none';
+    appPrincipal.style.display = 'block';
+    if(estadoSelect) estadoSelect.value = 'Pendiente por retirar';
+});
+
+// Al tocar Préstamo
+btnPrestamo.addEventListener('click', () => {
+    pantallaSeleccion.style.display = 'none';
+    appPrestamo.style.display = 'block';
+});
+
+// Botones para volver al menú principal
+btnVolver.addEventListener('click', () => {
+    appPrincipal.style.display = 'none';
+    pantallaSeleccion.style.display = 'flex';
+});
+
+btnVolverPrestamo.addEventListener('click', () => {
+    appPrestamo.style.display = 'none';
+    pantallaSeleccion.style.display = 'flex';
+});
+// ------------------------------------
 // 3. Función para GUARDAR registros
 const formulario = document.getElementById('formulario');
 formulario.addEventListener('submit', async (e) => {

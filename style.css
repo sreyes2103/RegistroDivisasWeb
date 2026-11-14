@@ -104,3 +104,54 @@ button:hover {
 .tarjeta-registro strong {
     color: #1e293b;
 }
+/* Estilos de la Pantalla de Selección */
+.contenedor-bienvenida {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 90vh;
+    text-align: center;
+}
+
+.contenedor-bienvenida h1 {
+    font-size: 2.2rem;
+    color: #1e293b;
+    margin-bottom: 5px;
+}
+
+.opciones-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 350px;
+}
+
+.tarjeta-opcion {
+    background: white;
+    padding: 30px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 2px solid transparent;
+}
+
+.tarjeta-opcion:active, .tarjeta-opcion:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    border-color: #3b82f6;
+}
+
+.icono-opcion {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.tarjeta-opcion h3 {
+    color: #1e293b;
+    font-size: 1.3rem;
+    margin: 0;
+}
