@@ -84,11 +84,69 @@
         <div class="contenedor">
             <button id="btn-volver-prestamo" style="background-color: #64748b; margin-bottom: 20px; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem;">⬅ Volver al menú</button>
             
-            <h1>Control de Préstamos</h1>
-            <div style="background-color: white; padding: 40px 20px; border-radius: 8px; text-align: center; margin-top: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                <span style="font-size: 3rem;">🚧</span>
-                <h3 style="color: #475569; margin-top: 15px;">Sección en construcción</h3>
-                <p style="color: #64748b;">Trabajaremos en este módulo más adelante.</p>
+            <h1>Registro de Préstamo</h1>
+            
+            <form id="formulario-prestamo">
+                <label for="contacto-prestamo">Cliente / Deudor:</label>
+                <input type="text" id="contacto-prestamo" placeholder="Ej. Pedro Gómez" list="sugerencias-contactos" required>
+    
+                <label for="telefono-prestamo">Teléfono:</label>
+                <input type="tel" id="telefono-prestamo" placeholder="0414-1234567" required>
+
+                <label for="monto-prestamo">Monto prestado (Capital):</label>
+                <input type="number" id="monto-prestamo" placeholder="Ej. 100.00" step="0.01" required>
+
+                <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px; background-color: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                    <input type="checkbox" id="check-interes" style="width: 20px; height: 20px; margin: 0; cursor: pointer;">
+                    <label for="check-interes" style="margin: 0; cursor: pointer; font-size: 1rem;">Aplicar porcentaje de interés</label>
+                </div>
+
+                <div id="caja-porcentaje" style="display: none;">
+                    <label for="porcentaje-interes">Porcentaje (%):</label>
+                    <input type="number" id="porcentaje-interes" placeholder="Ej. 10" step="0.1">
+                </div>
+
+                <div style="background-color: #eff6ff; border: 2px dashed #3b82f6; padding: 15px; text-align: center; border-radius: 8px; margin-bottom: 15px;">
+                    <h3 id="display-total-prestamo" style="margin: 0; color: #1e3a8a; font-size: 1.4rem;">Monto a pagar: $0.00</h3>
+                </div>
+
+                <label for="estado-prestamo">Estado:</label>
+                <select id="estado-prestamo">
+                    <option value="Deuda activa">Deuda activa</option>
+                    <option value="Pagado">Pagado</option>
+                </select>
+
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label for="fecha-prestamo">Fecha de préstamo:</label>
+                        <input type="date" id="fecha-prestamo" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="fecha-cancelar">Fecha a cancelar:</label>
+                        <input type="date" id="fecha-cancelar" required>
+                    </div>
+                </div>
+
+                <label for="ubicacion-prestamo">Ubicación (Enlace o dirección):</label>
+                <input type="text" id="ubicacion-prestamo" placeholder="Pega el link de Maps o escribe la zona" required>
+
+                <label for="nota-prestamo">Nota / Observación (Opcional):</label>
+                <textarea id="nota-prestamo" placeholder="Ej. Dejó una herramienta en garantía..." style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 16px; background-color: #f8fafc; font-family: inherit; resize: vertical;" rows="2"></textarea>
+
+                <button type="submit" style="background-color: #f59e0b;">Guardar Préstamo</button>
+            </form>
+
+            <hr>
+
+            <h2>Préstamos Activos</h2>
+            <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                <h3 style="margin: 0; color: #92400e; font-size: 1.3rem;">Dinero en la calle: $<span id="total-dinero-calle">0.00</span></h3>
+            </div>
+
+            <input type="text" id="buscador-prestamos" placeholder="🔍 Buscar préstamo..." style="margin-bottom: 15px; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; font-size: 1rem; background-color: #f8fafc;">
+            
+            <div id="lista-prestamos">
+                <p>No hay préstamos activos todavía.</p>
             </div>
         </div>
     </div>      
@@ -102,7 +160,6 @@
             
             <form id="form-clientes">
                 <input type="hidden" id="edit-cliente-id" value="">
-                <!-- NUEVA MEMORIA PARA LA SINCRONIZACIÓN -->
                 <input type="hidden" id="edit-cliente-nombre-original" value="">
 
                 <label for="nombre-cliente">Nombre del Cliente / Vendedor:</label>
