@@ -23,8 +23,14 @@
                 <span class="icono-opcion">🤝</span>
                 <h3>Préstamo</h3>
             </div>
+
+            <!-- NUEVA OPCIÓN: CLIENTES -->
+            <div class="tarjeta-opcion" id="btn-clientes">
+                <span class="icono-opcion">👥</span>
+                <h3>Clientes</h3>
+            </div>
         </div>
-    </div>
+    </div> <!-- ¡AQUÍ ESTÁ EL CIERRE QUE FALTABA! -->
 
     <!-- APLICACIÓN PRINCIPAL (Oculta al inicio) -->
     <div id="app-principal" style="display: none;">
@@ -34,66 +40,76 @@
             
             <h1>Agrega los datos del vendedor</h1>
             
-            <!-- (AQUÍ DEBE ESTAR TU FORMULARIO INTACTO) -->
-        
-        <!-- Formulario para ingresar nuevos datos -->
-        <!-- Formulario para ingresar nuevos datos -->
-        <form id="formulario">
+            <!-- Formulario para ingresar nuevos datos -->
+            <form id="formulario">
                 <label for="contacto">Contacto / Amistad:</label>
-                <!-- Agregamos el list="sugerencias-contactos" aquí -->
                 <input type="text" id="contacto" placeholder="Ej. Juan Pérez" list="sugerencias-contactos" required>
-                <!-- Esta etiqueta invisible guardará los nombres -->
                 <datalist id="sugerencias-contactos"></datalist>
     
                 <label for="telefono">Teléfono:</label>
                 <input type="tel" id="telefono" placeholder="0414-1234567" required>
 
-            <label for="monto">Monto (Divisas):</label>
-            <input type="number" id="monto" placeholder="Ej. 50.00" step="0.01" required>
+                <label for="monto">Monto (Divisas):</label>
+                <input type="number" id="monto" placeholder="Ej. 50.00" step="0.01" required>
 
-            <label for="estado">Estado:</label>
-            <select id="estado">
-                <option value="Pendiente por retirar">Pendiente por retirar</option>
-                <option value="Me debe">Me debe</option>
-                <option value="Pagado">Pagado</option>
-            </select>
+                <label for="estado">Estado:</label>
+                <select id="estado">
+                    <option value="Pendiente por retirar">Pendiente por retirar</option>
+                    <option value="Me debe">Me debe</option>
+                    <option value="Pagado">Pagado</option>
+                </select>
 
-            <label for="fecha">Fecha:</label>
-            <input type="date" id="fecha" required>
+                <label for="fecha">Fecha:</label>
+                <input type="date" id="fecha" required>
 
-            <label for="ubicacion">Ubicación (Enlace o dirección):</label>
-            <input type="text" id="ubicacion" placeholder="Pega el link de Maps o escribe la zona" required>
+                <label for="ubicacion">Ubicación (Enlace o dirección):</label>
+                <input type="text" id="ubicacion" placeholder="Pega el link de Maps o escribe la zona" required>
 
-            <button type="submit">Guardar Registro</button>
-        </form>
+                <button type="submit">Guardar Registro</button>
+            </form>
 
-        <hr>
+            <hr>
 
-        <h2>Historial de Registros</h2>
-        <!-- Recuadro del Total Pendiente -->
-        <div style="background-color: #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
-            <h3 style="margin: 0; color: #1e293b; font-size: 1.3rem;">Total Pendiente: $<span id="total-pendiente">0.00</span></h3>
+            <h2>Historial de Registros</h2>
+            <div style="background-color: #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                <h3 style="margin: 0; color: #1e293b; font-size: 1.3rem;">Total Pendiente: $<span id="total-pendiente">0.00</span></h3>
+            </div>
+            
+            <div id="lista-registros">
+                <p>No hay registros todavía.</p>
+            </div>
         </div>
-        <!-- Aquí aparecerán los registros guardados más adelante -->
-        <div id="lista-registros">
-            <p>No hay registros todavía.</p>
+    </div> <!-- Cierre de app-principal -->
+
+    <!-- SECCIÓN DE PRÉSTAMOS -->
+    <div id="app-prestamo" style="display: none;">
+        <div class="contenedor">
+            <button id="btn-volver-prestamo" style="background-color: #64748b; margin-bottom: 20px; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem;">⬅ Volver al menú</button>
+            
+            <h1>Control de Préstamos</h1>
+            <div style="background-color: white; padding: 40px 20px; border-radius: 8px; text-align: center; margin-top: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <span style="font-size: 3rem;">🚧</span>
+                <h3 style="color: #475569; margin-top: 15px;">Sección en construcción</h3>
+                <p style="color: #64748b;">Trabajaremos en este módulo más adelante.</p>
+            </div>
+        </div>
+    </div>      
+
+    <!-- SECCIÓN DE CLIENTES -->
+    <div id="app-clientes" style="display: none;">
+        <div class="contenedor">
+            <button id="btn-volver-clientes" style="background-color: #64748b; margin-bottom: 20px; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem;">⬅ Volver al menú</button>
+            
+            <h1>Gestión de Clientes</h1>
+            <div style="background-color: white; padding: 40px 20px; border-radius: 8px; text-align: center; margin-top: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <span style="font-size: 3rem;">👥</span>
+                <h3 style="color: #475569; margin-top: 15px;">Módulo de Clientes</h3>
+                <p style="color: #64748b;">Aquí administraremos la base de datos de clientes de Refri Pharma.</p>
+            </div>
         </div>
     </div>
-</div> <!-- Este es el cierre de app-principal -->
- <!-- SECCIÓN DE PRÉSTAMOS (En blanco por ahora) -->
-        <div id="app-prestamo" style="display: none;">
-            <div class="contenedor">
-                <button id="btn-volver-prestamo" style="background-color: #64748b; margin-bottom: 20px; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem;">⬅ Volver al menú</button>
-                
-                <h1>Control de Préstamos</h1>
-                <div style="background-color: white; padding: 40px 20px; border-radius: 8px; text-align: center; margin-top: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                    <span style="font-size: 3rem;">🚧</span>
-                    <h3 style="color: #475569; margin-top: 15px;">Sección en construcción</h3>
-                    <p style="color: #64748b;">Trabajaremos en este módulo más adelante.</p>
-                </div>
-            </div>
-        </div>       
-        <!-- Conectamos el archivo de programación -->
-        <script type="module" src="app.js"></script>
-    </body>
+
+    <!-- Conectamos el archivo de programación -->
+    <script type="module" src="app.js"></script>
+</body>
 </html>

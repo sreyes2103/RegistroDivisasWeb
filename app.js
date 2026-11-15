@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 // 1. Tus llaves de acceso a Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyA5bbZjH6I-x7Rudxk-Zue7OzcPgAzVSZ0",
@@ -13,14 +14,20 @@ const firebaseConfig = {
 // 2. Inicializar Firebase y la Base de Datos
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
 // --- SISTEMA DE NAVEGACIÓN Y MENÚ ---
 const pantallaSeleccion = document.getElementById('pantalla-seleccion');
 const appPrincipal = document.getElementById('app-principal'); // Pantalla de Compra
-const appPrestamo = document.getElementById('app-prestamo');   // Pantalla de Préstamo en blanco
+const appPrestamo = document.getElementById('app-prestamo');   // Pantalla de Préstamo
+const appClientes = document.getElementById('app-clientes');   // Pantalla de Clientes
+
 const btnCompra = document.getElementById('btn-compra');
 const btnPrestamo = document.getElementById('btn-prestamo');
+const btnClientes = document.getElementById('btn-clientes');
+
 const btnVolver = document.getElementById('btn-volver');
 const btnVolverPrestamo = document.getElementById('btn-volver-prestamo');
+const btnVolverClientes = document.getElementById('btn-volver-clientes');
 const estadoSelect = document.getElementById('estado');
 
 // Al tocar Compra de Efectivo
@@ -36,6 +43,12 @@ btnPrestamo.addEventListener('click', () => {
     appPrestamo.style.display = 'block';
 });
 
+// Al tocar Clientes
+btnClientes.addEventListener('click', () => {
+    pantallaSeleccion.style.display = 'none';
+    appClientes.style.display = 'block';
+});
+
 // Botones para volver al menú principal
 btnVolver.addEventListener('click', () => {
     appPrincipal.style.display = 'none';
@@ -46,8 +59,13 @@ btnVolverPrestamo.addEventListener('click', () => {
     appPrestamo.style.display = 'none';
     pantallaSeleccion.style.display = 'flex';
 });
-// ------------------------------------
-// 3. Función para GUARDAR registros (Con lógica inteligente para sumar deudas)
+
+btnVolverClientes.addEventListener('click', () => {
+    appClientes.style.display = 'none';
+    pantallaSeleccion.style.display = 'flex';
+});
+
+// 3. Función para GUARDAR registros
 const formulario = document.getElementById('formulario');
 formulario.addEventListener('submit', async (e) => {
     e.preventDefault(); 
@@ -60,33 +78,28 @@ formulario.addEventListener('submit', async (e) => {
     const ubicacion = document.getElementById('ubicacion').value;
 
     try {
-        // 1. Buscamos en la base de datos si ya existe este contacto
         const q = query(collection(db, "registros"), where("contacto", "==", contacto));
         const consulta = await getDocs(q);
         
         let registroPendiente = null;
         
-        // 2. Revisamos si ese contacto tiene alguna cuenta "viva" (que no esté pagada)
         consulta.forEach((documento) => {
             if (documento.data().estado !== "Pagado") {
                 registroPendiente = documento;
             }
         });
 
-        // 3. Tomamos la decisión: Sumar o Crear nuevo
         if (registroPendiente) {
-            // Ya tiene una tarjeta: Sumamos al saldo anterior
             const montoAnterior = parseFloat(registroPendiente.data().monto);
             const totalActualizado = montoAnterior + montoNuevo;
             
             await updateDoc(doc(db, "registros", registroPendiente.id), {
                 monto: totalActualizado,
-                fecha: fecha, // Actualizamos a la fecha de su última compra
+                fecha: fecha,
                 ubicacion: ubicacion
             });
             alert(`Monto sumado. La nueva deuda total de ${contacto} es de $${totalActualizado.toFixed(2)}`);
         } else {
-            // No debe nada o es un cliente nuevo: Creamos el registro de cero
             await addDoc(collection(db, "registros"), {
                 contacto: contacto,
                 telefono: telefono,
@@ -137,7 +150,6 @@ onSnapshot(collection(db, "registros"), (querySnapshot) => {
         if(numLimpio.startsWith("0")) numLimpio = numLimpio.substring(1);
         const enlaceWa = `https://wa.me/58${numLimpio}`;
         
-        // Lógica inteligente para el mapa: si empieza con "http" lo abre directo, si no, lo busca en Google Maps
         const enlaceMapa = dato.ubicacion.startsWith('http') 
             ? dato.ubicacion 
             : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dato.ubicacion)}`;
@@ -170,11 +182,11 @@ onSnapshot(collection(db, "registros"), (querySnapshot) => {
     
     window.directorioContactos = directorio;
 });
+
 // 5. Función para BORRAR registros
 listaRegistros.addEventListener('click', async (e) => {
     if (e.target.classList.contains('btn-borrar')) {
         const idRegistro = e.target.getAttribute('data-id');
-        
         if (confirm("¿Estás seguro de que deseas borrar este registro?")) {
             try {
                 await deleteDoc(doc(db, "registros", idRegistro));
@@ -189,7 +201,6 @@ listaRegistros.addEventListener('click', async (e) => {
 listaRegistros.addEventListener('click', async (e) => {
     if (e.target.classList.contains('btn-pagado')) {
         const idRegistro = e.target.getAttribute('data-id');
-        
         if (confirm("¿Confirmas que esta persona ya te pagó?")) {
             try {
                 await updateDoc(doc(db, "registros", idRegistro), {
@@ -201,6 +212,7 @@ listaRegistros.addEventListener('click', async (e) => {
         }
     }
 });
+
 // 7. Función para AUTO-COMPLETAR datos de vendedores frecuentes
 const inputContacto = document.getElementById('contacto');
 const inputTelefono = document.getElementById('telefono');
@@ -208,8 +220,6 @@ const inputUbicacion = document.getElementById('ubicacion');
 
 inputContacto.addEventListener('input', (e) => {
     const nombreEscrito = e.target.value;
-    
-    // Si el nombre escrito coincide con uno guardado, llenamos el resto automáticamente
     if (window.directorioContactos && window.directorioContactos[nombreEscrito]) {
         inputTelefono.value = window.directorioContactos[nombreEscrito].telefono;
         inputUbicacion.value = window.directorioContactos[nombreEscrito].ubicacion;
