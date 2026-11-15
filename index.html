@@ -30,12 +30,11 @@
                 <h3>Clientes</h3>
             </div>
         </div>
-    </div> <!-- ¡AQUÍ ESTÁ EL CIERRE QUE FALTABA! -->
+    </div> 
 
-    <!-- APLICACIÓN PRINCIPAL (Oculta al inicio) -->
+    <!-- APLICACIÓN PRINCIPAL (COMPRA DE EFECTIVO) -->
     <div id="app-principal" style="display: none;">
         <div class="contenedor">
-            <!-- Botón para regresar al menú -->
             <button id="btn-volver" style="background-color: #64748b; margin-bottom: 20px; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem;">⬅ Volver al menú</button>
             
             <h1>Agrega los datos del vendedor</h1>
@@ -79,7 +78,7 @@
                 <p>No hay registros todavía.</p>
             </div>
         </div>
-    </div> <!-- Cierre de app-principal -->
+    </div> 
 
     <!-- SECCIÓN DE PRÉSTAMOS -->
     <div id="app-prestamo" style="display: none;">
@@ -95,16 +94,38 @@
         </div>
     </div>      
 
-    <!-- SECCIÓN DE CLIENTES -->
+    <!-- SECCIÓN DE CLIENTES (CRM) -->
     <div id="app-clientes" style="display: none;">
         <div class="contenedor">
             <button id="btn-volver-clientes" style="background-color: #64748b; margin-bottom: 20px; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem;">⬅ Volver al menú</button>
             
-            <h1>Gestión de Clientes</h1>
-            <div style="background-color: white; padding: 40px 20px; border-radius: 8px; text-align: center; margin-top: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                <span style="font-size: 3rem;">👥</span>
-                <h3 style="color: #475569; margin-top: 15px;">Módulo de Clientes</h3>
-                <p style="color: #64748b;">Aquí administraremos la base de datos de clientes de Refri Pharma.</p>
+            <h1>Directorio de Clientes</h1>
+            
+            <!-- Formulario para agregar/editar cliente -->
+            <form id="form-clientes">
+                <!-- Memoria oculta para saber a quién estamos editando -->
+                <input type="hidden" id="edit-cliente-id" value="">
+
+                <label for="nombre-cliente">Nombre del Cliente / Vendedor:</label>
+                <input type="text" id="nombre-cliente" placeholder="Ej. Carlos Repuestos" required>
+
+                <label for="telefono-cliente">Teléfono:</label>
+                <input type="tel" id="telefono-cliente" placeholder="0414-1234567" required>
+
+                <label for="ubicacion-cliente">Ubicación (Enlace o dirección):</label>
+                <input type="text" id="ubicacion-cliente" placeholder="Pega el link de Maps o escribe la zona" required>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" id="btn-guardar-cliente" style="background-color: #10b981; flex: 1;">Guardar Cliente</button>
+                    <button type="button" id="btn-cancelar-edicion" style="background-color: #64748b; flex: 1; display: none;">Cancelar</button>
+                </div>
+            </form>
+
+            <hr>
+
+            <h2>Clientes Registrados</h2>
+            <div id="lista-clientes">
+                <p>No hay clientes registrados todavía.</p>
             </div>
         </div>
     </div>
