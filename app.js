@@ -11,7 +11,6 @@ const firebaseConfig = {
   appId: "1:939629424328:web:eab42c8c241fd3ed89bffd"
 };
 
-// 2. Inicializar Firebase y la Base de Datos
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
@@ -62,8 +61,6 @@ btnVolverClientes.addEventListener('click', () => {
 });
 
 // --- MÓDULO DE TRANSACCIONES (COMPRA DE EFECTIVO) ---
-
-// 3. Función para GUARDAR registros de divisas
 const formulario = document.getElementById('formulario');
 formulario.addEventListener('submit', async (e) => {
     e.preventDefault(); 
@@ -107,7 +104,6 @@ formulario.addEventListener('submit', async (e) => {
             alert("¡Registro de divisa guardado exitosamente!");
         }
 
-        // Alerta inteligente: Preguntar si desea guardar al cliente si es nuevo
         if (!window.directorioClientes || !window.directorioClientes[contacto]) {
             if (confirm(`El contacto "${contacto}" no está registrado en tu directorio. ¿Deseas agregarlo a tu lista de Clientes para el futuro?`)) {
                 await addDoc(collection(db, "clientes"), {
@@ -126,7 +122,6 @@ formulario.addEventListener('submit', async (e) => {
     }
 });
 
-// 4. Función para LEER registros en tiempo real (Divisas)
 const listaRegistros = document.getElementById('lista-registros');
 const totalPendienteDOM = document.getElementById('total-pendiente');
 
@@ -175,7 +170,6 @@ onSnapshot(collection(db, "registros"), (querySnapshot) => {
     if (totalPendienteDOM) totalPendienteDOM.innerText = totalAcumulado.toFixed(2);
 });
 
-// 5. Borrar transacciones de divisas
 listaRegistros.addEventListener('click', async (e) => {
     if (e.target.classList.contains('btn-borrar')) {
         const idRegistro = e.target.getAttribute('data-id');
@@ -185,7 +179,6 @@ listaRegistros.addEventListener('click', async (e) => {
     }
 });
 
-// 6. Marcar divisas como pagadas
 listaRegistros.addEventListener('click', async (e) => {
     if (e.target.classList.contains('btn-pagado')) {
         const idRegistro = e.target.getAttribute('data-id');
@@ -201,15 +194,16 @@ const listaClientesDOM = document.getElementById('lista-clientes');
 const datalistContactos = document.getElementById('sugerencias-contactos');
 window.directorioClientes = {}; 
 
-// 7. Función para GUARDAR o ACTUALIZAR Clientes
 if (formClientes) {
     const btnCancelarEdicion = document.getElementById('btn-cancelar-edicion');
     const btnGuardarCliente = document.getElementById('btn-guardar-cliente');
     const inputEditId = document.getElementById('edit-cliente-id');
+    const inputNombreOriginal = document.getElementById('edit-cliente-nombre-original'); // NUEVO
 
     const resetFormularioClientes = () => {
         formClientes.reset();
         inputEditId.value = "";
+        if (inputNombreOriginal) inputNombreOriginal.value = ""; // Limpiamos memoria
         btnGuardarCliente.innerText = "Guardar Cliente";
         btnGuardarCliente.style.backgroundColor = "#10b981";
         btnCancelarEdicion.style.display = "none";
@@ -221,18 +215,35 @@ if (formClientes) {
         const telefono = document.getElementById('telefono-cliente').value;
         const ubicacion = document.getElementById('ubicacion-cliente').value;
         const editId = inputEditId.value; 
+        const nombreOriginal = inputNombreOriginal ? inputNombreOriginal.value : ""; // Recuperamos el nombre viejo
 
         try {
             if (editId) {
-                // Modo Actualizar
+                // 1. Actualizamos el directorio de clientes
                 await updateDoc(doc(db, "clientes", editId), {
                     nombre: nombre,
                     telefono: telefono,
                     ubicacion: ubicacion
                 });
-                alert("¡Cliente actualizado exitosamente!");
+
+                // 2. SINCRONIZACIÓN MAESTRA: Actualizamos los registros de Compra de Efectivo
+                if (nombreOriginal) {
+                    const qSync = query(collection(db, "registros"), where("contacto", "==", nombreOriginal));
+                    const consultaSync = await getDocs(qSync);
+                    
+                    const promesas = [];
+                    consultaSync.forEach((docRegistro) => {
+                        promesas.push(updateDoc(doc(db, "registros", docRegistro.id), {
+                            contacto: nombre,       // Se actualiza el nombre
+                            telefono: telefono,     // Se actualiza el teléfono
+                            ubicacion: ubicacion    // Se actualiza la ubicación
+                        }));
+                    });
+                    await Promise.all(promesas); // Esperamos a que todos se actualicen
+                }
+                
+                alert("¡Cliente y todos sus registros actualizados exitosamente!");
             } else {
-                // Modo Crear Nuevo
                 await addDoc(collection(db, "clientes"), {
                     nombre: nombre,
                     telefono: telefono,
@@ -251,7 +262,6 @@ if (formClientes) {
     }
 }
 
-// 8. Función para LEER Clientes (Llena la lista visual y el directorio interno)
 onSnapshot(collection(db, "clientes"), (querySnapshot) => {
     if (listaClientesDOM) listaClientesDOM.innerHTML = '';
     let htmlSugerencias = '';
@@ -300,7 +310,6 @@ onSnapshot(collection(db, "clientes"), (querySnapshot) => {
     }
 });
 
-// 9. Borrar y Editar Clientes en la Lista
 if (listaClientesDOM) {
     listaClientesDOM.addEventListener('click', async (e) => {
         if (e.target.classList.contains('btn-borrar-cliente')) {
@@ -317,6 +326,11 @@ if (listaClientesDOM) {
             const ubicacion = e.target.getAttribute('data-ubicacion');
 
             document.getElementById('edit-cliente-id').value = idRegistro;
+            // GUARDAMOS EL NOMBRE ORIGINAL
+            if (document.getElementById('edit-cliente-nombre-original')) {
+                document.getElementById('edit-cliente-nombre-original').value = nombre;
+            }
+
             document.getElementById('nombre-cliente').value = nombre;
             document.getElementById('telefono-cliente').value = telefono;
             document.getElementById('ubicacion-cliente').value = ubicacion;
@@ -329,7 +343,6 @@ if (listaClientesDOM) {
     });
 }
 
-// 10. Función para AUTO-COMPLETAR en Compra de Efectivo
 const inputContacto = document.getElementById('contacto');
 const inputTelefono = document.getElementById('telefono');
 const inputUbicacion = document.getElementById('ubicacion');
@@ -341,3 +354,39 @@ inputContacto.addEventListener('input', (e) => {
         inputUbicacion.value = window.directorioClientes[nombreEscrito].ubicacion;
     }
 });
+
+// --- SISTEMA DE BÚSQUEDA (FILTROS EN VIVO) ---
+const buscadorRegistros = document.getElementById('buscador-registros');
+const buscadorClientes = document.getElementById('buscador-clientes');
+
+if (buscadorRegistros) {
+    buscadorRegistros.addEventListener('input', (e) => {
+        const textoBusqueda = e.target.value.toLowerCase();
+        const tarjetas = document.querySelectorAll('#lista-registros .tarjeta-registro');
+        
+        tarjetas.forEach(tarjeta => {
+            const contenido = tarjeta.innerText.toLowerCase();
+            if (contenido.includes(textoBusqueda)) {
+                tarjeta.style.display = 'block';
+            } else {
+                tarjeta.style.display = 'none';
+            }
+        });
+    });
+}
+
+if (buscadorClientes) {
+    buscadorClientes.addEventListener('input', (e) => {
+        const textoBusqueda = e.target.value.toLowerCase();
+        const tarjetas = document.querySelectorAll('#lista-clientes .tarjeta-registro');
+        
+        tarjetas.forEach(tarjeta => {
+            const contenido = tarjeta.innerText.toLowerCase();
+            if (contenido.includes(textoBusqueda)) {
+                tarjeta.style.display = 'block';
+            } else {
+                tarjeta.style.display = 'none';
+            }
+        });
+    });
+}

@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Divisas</title>
-    <!-- Conectamos el archivo de diseño -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -24,7 +23,6 @@
                 <h3>Préstamo</h3>
             </div>
 
-            <!-- NUEVA OPCIÓN: CLIENTES -->
             <div class="tarjeta-opcion" id="btn-clientes">
                 <span class="icono-opcion">👥</span>
                 <h3>Clientes</h3>
@@ -39,7 +37,6 @@
             
             <h1>Agrega los datos del vendedor</h1>
             
-            <!-- Formulario para ingresar nuevos datos -->
             <form id="formulario">
                 <label for="contacto">Contacto / Amistad:</label>
                 <input type="text" id="contacto" placeholder="Ej. Juan Pérez" list="sugerencias-contactos" required>
@@ -74,6 +71,8 @@
                 <h3 style="margin: 0; color: #1e293b; font-size: 1.3rem;">Total Pendiente: $<span id="total-pendiente">0.00</span></h3>
             </div>
             
+            <input type="text" id="buscador-registros" placeholder="🔍 Buscar por nombre, estado, fecha o ubicación..." style="margin-bottom: 15px; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; font-size: 1rem; background-color: #f8fafc;">
+            
             <div id="lista-registros">
                 <p>No hay registros todavía.</p>
             </div>
@@ -101,10 +100,10 @@
             
             <h1>Directorio de Clientes</h1>
             
-            <!-- Formulario para agregar/editar cliente -->
             <form id="form-clientes">
-                <!-- Memoria oculta para saber a quién estamos editando -->
                 <input type="hidden" id="edit-cliente-id" value="">
+                <!-- NUEVA MEMORIA PARA LA SINCRONIZACIÓN -->
+                <input type="hidden" id="edit-cliente-nombre-original" value="">
 
                 <label for="nombre-cliente">Nombre del Cliente / Vendedor:</label>
                 <input type="text" id="nombre-cliente" placeholder="Ej. Carlos Repuestos" required>
@@ -124,13 +123,14 @@
             <hr>
 
             <h2>Clientes Registrados</h2>
+            <input type="text" id="buscador-clientes" placeholder="🔍 Buscar cliente por nombre, teléfono o zona..." style="margin-bottom: 15px; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; font-size: 1rem; background-color: #f8fafc;">
+            
             <div id="lista-clientes">
                 <p>No hay clientes registrados todavía.</p>
             </div>
         </div>
     </div>
 
-    <!-- Conectamos el archivo de programación -->
     <script type="module" src="app.js"></script>
 </body>
 </html>
