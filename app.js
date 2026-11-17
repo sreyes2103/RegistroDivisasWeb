@@ -20,94 +20,120 @@ const db = initializeFirestore(app, {
 // --- SISTEMA DE NAVEGACIÓN Y MENÚ ---
 const pantallaSeleccion = document.getElementById('pantalla-seleccion');
 const appPrincipal = document.getElementById('app-principal'); // Pantalla de Compra
-const appPrestamo = document.getElementById('app-prestamo');   // Pantalla de Préstamo en blanco
+const appPrestamo = document.getElementById('app-prestamo');   // Pantalla de Préstamo
+const appClientes = document.getElementById('app-clientes');   // Pantalla de Clientes (CRM)
+
 const btnCompra = document.getElementById('btn-compra');
 const btnPrestamo = document.getElementById('btn-prestamo');
+const btnClientes = document.getElementById('btn-clientes');
+
 const btnVolver = document.getElementById('btn-volver');
 const btnVolverPrestamo = document.getElementById('btn-volver-prestamo');
+const btnVolverClientes = document.getElementById('btn-volver-clientes');
 const estadoSelect = document.getElementById('estado');
 
 // Al tocar Compra de Efectivo
-btnCompra.addEventListener('click', () => {
-    pantallaSeleccion.style.display = 'none';
-    appPrincipal.style.display = 'block';
-    if(estadoSelect) estadoSelect.value = 'Pendiente por retirar';
-});
+if (btnCompra) {
+    btnCompra.addEventListener('click', () => {
+        pantallaSeleccion.style.display = 'none';
+        appPrincipal.style.display = 'block';
+        if(estadoSelect) estadoSelect.value = 'Pendiente por retirar';
+    });
+}
 
 // Al tocar Préstamo
-btnPrestamo.addEventListener('click', () => {
-    pantallaSeleccion.style.display = 'none';
-    appPrestamo.style.display = 'block';
-});
+if (btnPrestamo) {
+    btnPrestamo.addEventListener('click', () => {
+        pantallaSeleccion.style.display = 'none';
+        appPrestamo.style.display = 'block';
+    });
+}
+
+// Al tocar Clientes
+if (btnClientes) {
+    btnClientes.addEventListener('click', () => {
+        pantallaSeleccion.style.display = 'none';
+        appClientes.style.display = 'block';
+    });
+}
 
 // Botones para volver al menú principal
-btnVolver.addEventListener('click', () => {
-    appPrincipal.style.display = 'none';
-    pantallaSeleccion.style.display = 'flex';
-});
+if (btnVolver) {
+    btnVolver.addEventListener('click', () => {
+        appPrincipal.style.display = 'none';
+        pantallaSeleccion.style.display = 'flex';
+    });
+}
 
-btnVolverPrestamo.addEventListener('click', () => {
-    appPrestamo.style.display = 'none';
-    pantallaSeleccion.style.display = 'flex';
-});
+if (btnVolverPrestamo) {
+    btnVolverPrestamo.addEventListener('click', () => {
+        appPrestamo.style.display = 'none';
+        pantallaSeleccion.style.display = 'flex';
+    });
+}
+
+if (btnVolverClientes) {
+    btnVolverClientes.addEventListener('click', () => {
+        appClientes.style.display = 'none';
+        pantallaSeleccion.style.display = 'flex';
+    });
+}
+
 // ------------------------------------
 // 3. Función para GUARDAR registros (Con lógica inteligente para sumar deudas)
 const formulario = document.getElementById('formulario');
-formulario.addEventListener('submit', async (e) => {
-    e.preventDefault(); 
+if (formulario) {
+    formulario.addEventListener('submit', async (e) => {
+        e.preventDefault(); 
 
-    const contacto = document.getElementById('contacto').value.trim();
-    const telefono = document.getElementById('telefono').value;
-    const montoNuevo = parseFloat(document.getElementById('monto').value);
-    const estado = document.getElementById('estado').value;
-    const fecha = document.getElementById('fecha').value;
-    const ubicacion = document.getElementById('ubicacion').value;
+        const contacto = document.getElementById('contacto').value.trim();
+        const telefono = document.getElementById('telefono').value;
+        const montoNuevo = parseFloat(document.getElementById('monto').value);
+        const estado = document.getElementById('estado').value;
+        const fecha = document.getElementById('fecha').value;
+        const ubicacion = document.getElementById('ubicacion').value;
 
-    try {
-        // 1. Buscamos en la base de datos si ya existe este contacto
-        const q = query(collection(db, "registros"), where("contacto", "==", contacto));
-        const consulta = await getDocs(q);
-        
-        let registroPendiente = null;
-        
-        // 2. Revisamos si ese contacto tiene alguna cuenta "viva" (que no esté pagada)
-        consulta.forEach((documento) => {
-            if (documento.data().estado !== "Pagado") {
-                registroPendiente = documento;
-            }
-        });
-
-        // 3. Tomamos la decisión: Sumar o Crear nuevo
-        if (registroPendiente) {
-            // Ya tiene una tarjeta: Sumamos al saldo anterior
-            const montoAnterior = parseFloat(registroPendiente.data().monto);
-            const totalActualizado = montoAnterior + montoNuevo;
+        try {
+            const q = query(collection(db, "registros"), where("contacto", "==", contacto));
+            const consulta = await getDocs(q);
             
-            await updateDoc(doc(db, "registros", registroPendiente.id), {
-                monto: totalActualizado,
-                fecha: fecha, // Actualizamos a la fecha de su última compra
-                ubicacion: ubicacion
+            let registroPendiente = null;
+            
+            consulta.forEach((documento) => {
+                if (documento.data().estado !== "Pagado") {
+                    registroPendiente = documento;
+                }
             });
-            alert(`Monto sumado. La nueva deuda total de ${contacto} es de $${totalActualizado.toFixed(2)}`);
-        } else {
-            // No debe nada o es un cliente nuevo: Creamos el registro de cero
-            await addDoc(collection(db, "registros"), {
-                contacto: contacto,
-                telefono: telefono,
-                monto: montoNuevo,
-                estado: estado,
-                fecha: fecha,
-                ubicacion: ubicacion
-            });
-            alert("¡Registro nuevo guardado exitosamente!");
+
+            if (registroPendiente) {
+                const montoAnterior = parseFloat(registroPendiente.data().monto);
+                const totalActualizado = montoAnterior + montoNuevo;
+                
+                await updateDoc(doc(db, "registros", registroPendiente.id), {
+                    monto: totalActualizado,
+                    fecha: fecha,
+                    ubicacion: ubicacion
+                });
+                alert(`Monto sumado. La nueva deuda total de ${contacto} es de $${totalActualizado.toFixed(2)}`);
+            } else {
+                await addDoc(collection(db, "registros"), {
+                    contacto: contacto,
+                    telefono: telefono,
+                    monto: montoNuevo,
+                    estado: estado,
+                    fecha: fecha,
+                    ubicacion: ubicacion
+                });
+                alert("¡Registro nuevo guardado exitosamente!");
+            }
+            
+            formulario.reset(); 
+        } catch (error) {
+            console.error("Error al guardar: ", error);
+            alert("Hubo un error al intentar guardar.");
         }
-        
-        formulario.reset(); 
-    } catch (error) {
-        console.error("Error al guardar: ", error);
-        alert("Hubo un error al intentar guardar.");
-    }
-});
+    });
+}
 
 // 4. Función para LEER registros en tiempo real, SUMAR y CREAR DIRECTORIO
 const listaRegistros = document.getElementById('lista-registros');
@@ -115,22 +141,21 @@ const totalPendienteDOM = document.getElementById('total-pendiente');
 const datalistContactos = document.getElementById('sugerencias-contactos');
 
 onSnapshot(collection(db, "registros"), (querySnapshot) => {
+    if (!listaRegistros) return;
     listaRegistros.innerHTML = ''; 
     let totalAcumulado = 0; 
     
-    const directorio = {}; // Memoria temporal para guardar los datos únicos del vendedor
+    const directorio = {}; 
     let htmlSugerencias = ''; 
     
     querySnapshot.forEach((documento) => {
         const dato = documento.data();
         const id = documento.id; 
         
-        // Sumar solo si no está pagado
         if (dato.estado !== "Pagado") {
             totalAcumulado += parseFloat(dato.monto);
         }
         
-        // Guardar en el directorio (Si el vendedor no está guardado aún, lo añade a la lista)
         if (!directorio[dato.contacto]) {
             directorio[dato.contacto] = {
                 telefono: dato.telefono,
@@ -165,53 +190,56 @@ onSnapshot(collection(db, "registros"), (querySnapshot) => {
     if (totalPendienteDOM) totalPendienteDOM.innerText = totalAcumulado.toFixed(2);
     if (datalistContactos) datalistContactos.innerHTML = htmlSugerencias;
     
-    // Guardar el directorio de forma global para usarlo al escribir
     window.directorioContactos = directorio;
 });
 
 // 5. Función para BORRAR registros
-listaRegistros.addEventListener('click', async (e) => {
-    if (e.target.classList.contains('btn-borrar')) {
-        const idRegistro = e.target.getAttribute('data-id');
-        
-        if (confirm("¿Estás seguro de que deseas borrar este registro?")) {
-            try {
-                await deleteDoc(doc(db, "registros", idRegistro));
-            } catch (error) {
-                console.error("Error al borrar:", error);
+if (listaRegistros) {
+    listaRegistros.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('btn-borrar')) {
+            const idRegistro = e.target.getAttribute('data-id');
+            
+            if (confirm("¿Estás seguro de que deseas borrar este registro?")) {
+                try {
+                    await deleteDoc(doc(db, "registros", idRegistro));
+                } catch (error) {
+                    console.error("Error al borrar:", error);
+                }
             }
         }
-    }
-});
+    });
+}
 
 // 6. Función para MARCAR COMO PAGADO
-listaRegistros.addEventListener('click', async (e) => {
-    if (e.target.classList.contains('btn-pagado')) {
-        const idRegistro = e.target.getAttribute('data-id');
-        
-        if (confirm("¿Confirmas que esta persona ya te pagó?")) {
-            try {
-                await updateDoc(doc(db, "registros", idRegistro), {
-                    estado: "Pagado"
-                });
-            } catch (error) {
-                console.error("Error al actualizar:", error);
+if (listaRegistros) {
+    listaRegistros.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('btn-pagado')) {
+            const idRegistro = e.target.getAttribute('data-id');
+            
+            if (confirm("¿Confirmas que esta persona ya te pagó?")) {
+                try {
+                    await updateDoc(doc(db, "registros", idRegistro), {
+                        estado: "Pagado"
+                    });
+                } catch (error) {
+                    console.error("Error al actualizar:", error);
+                }
             }
         }
-    }
-});
+    });
+}
 
 // 7. Función para AUTO-COMPLETAR datos de vendedores frecuentes
 const inputContacto = document.getElementById('contacto');
 const inputTelefono = document.getElementById('telefono');
 const inputUbicacion = document.getElementById('ubicacion');
 
-inputContacto.addEventListener('input', (e) => {
-    const nombreEscrito = e.target.value;
-    
-    // Si el nombre escrito coincide con uno guardado, llenamos el resto automáticamente
-    if (window.directorioContactos && window.directorioContactos[nombreEscrito]) {
-        inputTelefono.value = window.directorioContactos[nombreEscrito].telefono;
-        inputUbicacion.value = window.directorioContactos[nombreEscrito].ubicacion;
-    }
-});
+if (inputContacto) {
+    inputContacto.addEventListener('input', (e) => {
+        const nombreEscrito = e.target.value;
+        if (window.directorioContactos && window.directorioContactos[nombreEscrito]) {
+            if (inputTelefono) inputTelefono.value = window.directorioContactos[nombreEscrito].telefono;
+            if (inputUbicacion) inputUbicacion.value = window.directorioContactos[nombreEscrito].ubicacion;
+        }
+    });
+}
