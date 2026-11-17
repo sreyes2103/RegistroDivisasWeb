@@ -1,6 +1,6 @@
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open('refri-pharma-v1').then((cache) => {
+    caches.open('refri-pharma-v2').then((cache) => {
       return cache.addAll([
         './index.html',
         './style.css',
