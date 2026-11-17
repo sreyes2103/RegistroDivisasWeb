@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query, where, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// 1. Tus llaves de acceso a Firebase
+// 1. Configuración de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyA5bbZjH6I-x7Rudxk-Zue7OzcPgAzVSZ0",
   authDomain: "registrodivisas.firebaseapp.com",
@@ -12,7 +12,6 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-// Base de datos con persistencia offline activada
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
 });
@@ -104,9 +103,7 @@ if(formulario) {
             }
 
             if (!window.directorioClientes || !window.directorioClientes[contacto]) {
-                if (confirm(`El contacto "${contacto}" no está registrado en tu directorio. ¿Deseas agregarlo a tu lista de Clientes para el futuro?`)) {
-                    await addDoc(collection(db, "clientes"), { nombre: contacto, telefono: telefono, ubicacion: ubicacion });
-                }
+                await addDoc(collection(db, "clientes"), { nombre: contacto, telefono: telefono, ubicacion: ubicacion });
             }
             formulario.reset(); 
         } catch (error) {
@@ -174,7 +171,7 @@ if(listaRegistros) {
 
 
 // =========================================================
-// MÓDULO DE PRÉSTAMOS (CON ABONOS Y BORRADO INDIVIDUAL)
+// MÓDULO DE PRÉSTAMOS (CON ABONOS Y CHECK DE INTERÉS)
 // =========================================================
 const checkInteres = document.getElementById('check-interes');
 const cajaPorcentaje = document.getElementById('caja-porcentaje');
@@ -184,9 +181,9 @@ const displayTotalPrestamo = document.getElementById('display-total-prestamo');
 const formPrestamo = document.getElementById('formulario-prestamo');
 
 const calcularTotal = () => {
-    let montoBase = parseFloat(montoPrestamoInput.value) || 0;
+    let montoBase = parseFloat(montoPrestamoInput ? montoPrestamoInput.value : 0) || 0;
     if (checkInteres && checkInteres.checked) {
-        let porcentaje = parseFloat(porcentajeInput.value) || 0;
+        let porcentaje = parseFloat(porcentajeInput ? porcentajeInput.value : 0) || 0;
         let total = montoBase + (montoBase * (porcentaje / 100));
         if(displayTotalPrestamo) displayTotalPrestamo.innerText = `Monto a pagar: $${total.toFixed(2)}`;
         return total;
@@ -262,9 +259,7 @@ if(formPrestamo) {
             }
 
             if (!window.directorioClientes || !window.directorioClientes[contacto]) {
-                if (confirm(`El contacto "${contacto}" no está en tu directorio. ¿Deseas agregarlo a tus Clientes?`)) {
-                    await addDoc(collection(db, "clientes"), { nombre: contacto, telefono: telefono, ubicacion: ubicacion });
-                }
+                await addDoc(collection(db, "clientes"), { nombre: contacto, telefono: telefono, ubicacion: ubicacion });
             }
             formPrestamo.reset();
             if(cajaPorcentaje) cajaPorcentaje.style.display = 'none';
@@ -510,14 +505,14 @@ if (listaPrestamosDOM) {
         }
 
         if (e.target.classList.contains('btn-abono-sub')) {
-            let abono = prompt("Ingresa el monto a abonar a ESTE préstamo específico:");
+            let abono = prompt("Ingresa el monto a abonar al préstamo específico:");
             if(abono !== null && parseFloat(abono) > 0) {
                 await procesarPago(e.target.getAttribute('data-id'), e.target.getAttribute('data-index'), parseFloat(abono), true, false);
             }
         }
 
         if (e.target.classList.contains('btn-pagado-sub')) {
-            if (confirm("¿Confirmas que se liquidó ESTE préstamo específico?")) {
+            if (confirm("¿Confirmas que se liquidó este préstamo específico?")) {
                 await procesarPago(e.target.getAttribute('data-id'), e.target.getAttribute('data-index'), null, false, false);
             }
         }
@@ -526,7 +521,7 @@ if (listaPrestamosDOM) {
 
 
 // =========================================================
-// MÓDULO DE CLIENTES (CRM Y AUTOCOMPLETADO)
+// MÓDULO DE CLIENTES (CRM)
 // =========================================================
 const formClientes = document.getElementById('form-clientes');
 const listaClientesDOM = document.getElementById('lista-clientes');
@@ -635,7 +630,7 @@ if (listaClientesDOM) {
     });
 }
 
-// Autocompletado (Compra)
+// Autocompletado de formularios
 const inputContacto = document.getElementById('contacto');
 if (inputContacto) {
     inputContacto.addEventListener('input', (e) => {
@@ -647,7 +642,6 @@ if (inputContacto) {
     });
 }
 
-// Autocompletado (Préstamos)
 const inputContactoPrestamo = document.getElementById('contacto-prestamo');
 if (inputContactoPrestamo) {
     inputContactoPrestamo.addEventListener('input', (e) => {
@@ -659,14 +653,9 @@ if (inputContactoPrestamo) {
     });
 }
 
-
 // =========================================================
-// SISTEMA DE BÚSQUEDA (FILTROS EN VIVO)
+// SISTEMA DE BÚSQUEDA EN VIVO
 // =========================================================
-const buscadorRegistros = document.getElementById('buscador-registros');
-const buscadorClientes = document.getElementById('buscador-clientes');
-const buscadorPrestamos = document.getElementById('buscador-prestamos');
-
 const configurarBuscador = (inputElement, selectorTarjetas) => {
     if (inputElement) {
         inputElement.addEventListener('input', (e) => {
@@ -678,6 +667,6 @@ const configurarBuscador = (inputElement, selectorTarjetas) => {
     }
 };
 
-configurarBuscador(buscadorRegistros, '#lista-registros .tarjeta-registro');
-configurarBuscador(buscadorClientes, '#lista-clientes .tarjeta-registro');
-configurarBuscador(buscadorPrestamos, '#lista-prestamos .tarjeta-registro');
+configurarBuscador(document.getElementById('buscador-registros'), '#lista-registros .tarjeta-registro');
+configurarBuscador(document.getElementById('buscador-clientes'), '#lista-clientes .tarjeta-registro');
+configurarBuscador(document.getElementById('buscador-prestamos'), '#lista-prestamos .tarjeta-registro');
