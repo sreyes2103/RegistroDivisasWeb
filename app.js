@@ -670,3 +670,144 @@ const configurarBuscador = (inputElement, selectorTarjetas) => {
 configurarBuscador(document.getElementById('buscador-registros'), '#lista-registros .tarjeta-registro');
 configurarBuscador(document.getElementById('buscador-clientes'), '#lista-clientes .tarjeta-registro');
 configurarBuscador(document.getElementById('buscador-prestamos'), '#lista-prestamos .tarjeta-registro');
+
+// =========================================================
+// SISTEMA DE SEGURIDAD PROTEGIENDO PRÉSTAMOS Y CLIENTES
+// =========================================================
+const modalBloqueo = document.getElementById('modal-bloqueo');
+const mensajeBloqueo = document.getElementById('mensaje-bloqueo');
+const inputPin = document.getElementById('input-pin');
+const btnDesbloquearPin = document.getElementById('btn-desbloquear-pin');
+const btnBiometria = document.getElementById('btn-biometria');
+const btnCancelarBloqueo = document.getElementById('btn-cancelar-bloqueo');
+const tituloModalSeguridad = document.getElementById('titulo-modal-seguridad');
+
+let destinoPendiente = null; // Guarda a qué pantalla quería entrar el usuario
+
+// Interceptar Clic en Préstamos
+if(btnPrestamo) {
+    btnPrestamo.addEventListener('click', () => {
+        solicitarAutorizacion(() => {
+            pantallaSeleccion.style.display = 'none';
+            appPrestamo.style.display = 'block';
+        }, "Sección de Préstamos");
+    });
+}
+
+// Interceptar Clic en Clientes
+if(btnClientes) {
+    btnClientes.addEventListener('click', () => {
+        solicitarAutorizacion(() => {
+            pantallaSeleccion.style.display = 'none';
+            appClientes.style.display = 'block';
+        }, "Directorio de Clientes");
+    });
+}
+
+const solicitarAutorizacion = (callbackAcceso, nombreSeccion) => {
+    let pinGuardado = localStorage.getItem('refri_pharma_pin');
+    let biometriaActiva = localStorage.getItem('refri_pharma_bio') === 'true';
+
+    destinoPendiente = callbackAcceso;
+    tituloModalSeguridad.innerText = `Acceso a ${nombreSeccion}`;
+    inputPin.value = '';
+    modalBloqueo.style.display = 'flex';
+
+    if (!pinGuardado) {
+        mensajeBloqueo.innerText = "Crea un PIN numérico de 4 dígitos:";
+        btnDesbloquearPin.innerText = "Crear PIN y Acceder";
+        if(btnBiometria) btnBiometria.style.display = 'none';
+    } else {
+        mensajeBloqueo.innerText = "Ingresa tu PIN de seguridad";
+        btnDesbloquearPin.innerText = "Desbloquear";
+        if (biometriaActiva && window.PublicKeyCredential) {
+            btnBiometria.style.display = 'block';
+        } else {
+            btnBiometria.style.display = 'none';
+        }
+    }
+    inputPin.focus();
+};
+
+// Botón cancelar modal
+if (btnCancelarBloqueo) {
+    btnCancelarBloqueo.addEventListener('click', () => {
+        modalBloqueo.style.display = 'none';
+        destinoPendiente = null;
+    });
+}
+
+// Validación de PIN
+if (btnDesbloquearPin) {
+    btnDesbloquearPin.addEventListener('click', async () => {
+        let pinGuardado = localStorage.getItem('refri_pharma_pin');
+        const valor = inputPin.value.trim();
+
+        if (valor.length !== 4 || isNaN(valor)) {
+            alert("Por favor ingresa exactamente 4 números.");
+            return;
+        }
+
+        if (!pinGuardado) {
+            localStorage.setItem('refri_pharma_pin', valor);
+            // Ofrecer registrar biometría automáticamente tras crear el PIN por primera vez
+            if (window.PublicKeyCredential && confirm("¿Deseas vincular la huella o Face ID de este equipo para accesos futuros más rápidos?")) {
+                await ejecutarBiometriaRegistro();
+            }
+            modalBloqueo.style.display = 'none';
+            if (destinoPendiente) destinoPendiente();
+        } else {
+            if (valor === pinGuardado) {
+                modalBloqueo.style.display = 'none';
+                if (destinoPendiente) destinoPendiente();
+            } else {
+                alert("❌ PIN incorrecto.");
+                inputPin.value = '';
+            }
+        }
+    });
+}
+
+if (inputPin) {
+    inputPin.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') btnDesbloquearPin.click();
+    });
+}
+
+// Funciones Biométricas
+const ejecutarBiometriaRegistro = async () => {
+    try {
+        const challenge = new Uint8Array(32);
+        window.crypto.getRandomValues(challenge);
+        await navigator.credentials.create({
+            publicKey: {
+                challenge: challenge,
+                rp: { name: "Refri Pharma" },
+                user: { id: new Uint8Array(16), name: "admin", displayName: "Admin" },
+                pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+                authenticatorSelection: { userVerification: "required" },
+                timeout: 60000
+            }
+        });
+        localStorage.setItem('refri_pharma_bio', 'true');
+        alert("✅ ¡Biometría vinculada con éxito!");
+    } catch (e) {
+        console.log("Registro biométrico omitido o cancelado", e);
+    }
+};
+
+if (btnBiometria) {
+    btnBiometria.addEventListener('click', async () => {
+        try {
+            const challenge = new Uint8Array(32);
+            window.crypto.getRandomValues(challenge);
+            await navigator.credentials.get({
+                publicKey: { challenge: challenge, userVerification: "required", timeout: 60000 }
+            });
+            modalBloqueo.style.display = 'none';
+            if (destinoPendiente) destinoPendiente();
+        } catch (error) {
+            alert("No se pudo verificar la huella/Face ID. Usa tu PIN.");
+        }
+    });
+}
