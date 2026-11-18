@@ -682,9 +682,8 @@ const btnBiometria = document.getElementById('btn-biometria');
 const btnCancelarBloqueo = document.getElementById('btn-cancelar-bloqueo');
 const tituloModalSeguridad = document.getElementById('titulo-modal-seguridad');
 
-let destinoPendiente = null; // Guarda a qué pantalla quería entrar el usuario
+let destinoPendiente = null;
 
-// Interceptar Clic en Préstamos
 if(btnPrestamo) {
     btnPrestamo.addEventListener('click', () => {
         solicitarAutorizacion(() => {
@@ -694,7 +693,6 @@ if(btnPrestamo) {
     });
 }
 
-// Interceptar Clic en Clientes
 if(btnClientes) {
     btnClientes.addEventListener('click', () => {
         solicitarAutorizacion(() => {
@@ -729,15 +727,13 @@ const solicitarAutorizacion = (callbackAcceso, nombreSeccion) => {
     inputPin.focus();
 };
 
-// Botón cancelar modal
 if (btnCancelarBloqueo) {
     btnCancelarBloqueo.addEventListener('click', () => {
         modalBloqueo.style.display = 'none';
-        destinoPendiente = null;
+        destinoPendiente = null; // ANULA EL ACCESO AL CANCELAR
     });
 }
 
-// Validación de PIN
 if (btnDesbloquearPin) {
     btnDesbloquearPin.addEventListener('click', async () => {
         let pinGuardado = localStorage.getItem('refri_pharma_pin');
@@ -750,16 +746,23 @@ if (btnDesbloquearPin) {
 
         if (!pinGuardado) {
             localStorage.setItem('refri_pharma_pin', valor);
-            // Ofrecer registrar biometría automáticamente tras crear el PIN por primera vez
             if (window.PublicKeyCredential && confirm("¿Deseas vincular la huella o Face ID de este equipo para accesos futuros más rápidos?")) {
                 await ejecutarBiometriaRegistro();
             }
             modalBloqueo.style.display = 'none';
-            if (destinoPendiente) destinoPendiente();
+            if (destinoPendiente) {
+                let accion = destinoPendiente;
+                destinoPendiente = null;
+                accion();
+            }
         } else {
             if (valor === pinGuardado) {
                 modalBloqueo.style.display = 'none';
-                if (destinoPendiente) destinoPendiente();
+                if (destinoPendiente) {
+                    let accion = destinoPendiente;
+                    destinoPendiente = null;
+                    accion();
+                }
             } else {
                 alert("❌ PIN incorrecto.");
                 inputPin.value = '';
@@ -774,7 +777,6 @@ if (inputPin) {
     });
 }
 
-// Funciones Biométricas
 const ejecutarBiometriaRegistro = async () => {
     try {
         const challenge = new Uint8Array(32);
@@ -805,7 +807,11 @@ if (btnBiometria) {
                 publicKey: { challenge: challenge, userVerification: "required", timeout: 60000 }
             });
             modalBloqueo.style.display = 'none';
-            if (destinoPendiente) destinoPendiente();
+            if (destinoPendiente) {
+                let accion = destinoPendiente;
+                destinoPendiente = null;
+                accion();
+            }
         } catch (error) {
             alert("No se pudo verificar la huella/Face ID. Usa tu PIN.");
         }
