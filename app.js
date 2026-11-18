@@ -16,7 +16,7 @@ const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
 });
 
-// --- SISTEMA DE NAVEGACIÓN Y MENÚ ---
+// --- SISTEMA DE NAVEGACIÓN Y SEGURIDAD BLINDADA ---
 const pantallaSeleccion = document.getElementById('pantalla-seleccion');
 const appPrincipal = document.getElementById('app-principal'); 
 const appPrestamo = document.getElementById('app-prestamo');   
@@ -31,36 +31,184 @@ const btnVolverPrestamo = document.getElementById('btn-volver-prestamo');
 const btnVolverClientes = document.getElementById('btn-volver-clientes');
 const estadoSelect = document.getElementById('estado');
 
-if(btnCompra) btnCompra.addEventListener('click', () => {
-    pantallaSeleccion.style.display = 'none';
-    appPrincipal.style.display = 'block';
-    if(estadoSelect) estadoSelect.value = 'Pendiente por retirar';
-});
+// Modales y Elementos de Seguridad
+const modalBloqueo = document.getElementById('modal-bloqueo');
+const mensajeBloqueo = document.getElementById('mensaje-bloqueo');
+const inputPin = document.getElementById('input-pin');
+const btnDesbloquearPin = document.getElementById('btn-desbloquear-pin');
+const btnBiometria = document.getElementById('btn-biometria');
+const btnCancelarBloqueo = document.getElementById('btn-cancelar-bloqueo');
+const tituloModalSeguridad = document.getElementById('titulo-modal-seguridad');
 
-if(btnPrestamo) btnPrestamo.addEventListener('click', () => {
-    pantallaSeleccion.style.display = 'none';
-    appPrestamo.style.display = 'block';
-});
+let destinoAccion = null;
 
-if(btnClientes) btnClientes.addEventListener('click', () => {
-    pantallaSeleccion.style.display = 'none';
-    appClientes.style.display = 'block';
-});
+// 1. Compra de Efectivo (Libre acceso)
+if(btnCompra) {
+    btnCompra.onclick = () => {
+        pantallaSeleccion.style.display = 'none';
+        appPrincipal.style.display = 'block';
+        if(estadoSelect) estadoSelect.value = 'Pendiente por retirar';
+    };
+}
 
-if(btnVolver) btnVolver.addEventListener('click', () => {
-    appPrincipal.style.display = 'none';
-    pantallaSeleccion.style.display = 'flex';
-});
+// 2. Préstamos (Protegido)
+if(btnPrestamo) {
+    btnPrestamo.onclick = () => {
+        abrirSeguridad("Sección de Préstamos", () => {
+            pantallaSeleccion.style.display = 'none';
+            appPrestamo.style.display = 'block';
+        });
+    };
+}
 
-if(btnVolverPrestamo) btnVolverPrestamo.addEventListener('click', () => {
-    appPrestamo.style.display = 'none';
-    pantallaSeleccion.style.display = 'flex';
-});
+// 3. Clientes (Protegido)
+if(btnClientes) {
+    btnClientes.onclick = () => {
+        abrirSeguridad("Directorio de Clientes", () => {
+            pantallaSeleccion.style.display = 'none';
+            appClientes.style.display = 'block';
+        });
+    };
+}
 
-if(btnVolverClientes) btnVolverClientes.addEventListener('click', () => {
-    appClientes.style.display = 'none';
-    pantallaSeleccion.style.display = 'flex';
-});
+// Botones de Retorno al Menú Principal
+if(btnVolver) {
+    btnVolver.onclick = () => {
+        appPrincipal.style.display = 'none';
+        pantallaSeleccion.style.display = 'flex';
+    };
+}
+
+if(btnVolverPrestamo) {
+    btnVolverPrestamo.onclick = () => {
+        appPrestamo.style.display = 'none';
+        pantallaSeleccion.style.display = 'flex';
+    };
+}
+
+if(btnVolverClientes) {
+    btnVolverClientes.onclick = () => {
+        appClientes.style.display = 'none';
+        pantallaSeleccion.style.display = 'flex';
+    };
+}
+
+// --- CONTROLADOR DE LA VENTANA DE SEGURIDAD ---
+function abrirSeguridad(nombreSeccion, callbackExito) {
+    destinoAccion = callbackExito;
+    tituloModalSeguridad.innerText = `Acceso a ${nombreSeccion}`;
+    inputPin.value = '';
+    modalBloqueo.style.display = 'flex';
+
+    let pinGuardado = localStorage.getItem('refri_pharma_pin');
+    let biometriaActiva = localStorage.getItem('refri_pharma_bio') === 'true';
+
+    if (!pinGuardado) {
+        mensajeBloqueo.innerText = "Crea un PIN numérico de 4 dígitos:";
+        btnDesbloquearPin.innerText = "Crear PIN y Acceder";
+        if(btnBiometria) btnBiometria.style.display = 'none';
+    } else {
+        mensajeBloqueo.innerText = "Ingresa tu PIN de seguridad";
+        btnDesbloquearPin.innerText = "Desbloquear";
+        if (biometriaActiva && window.PublicKeyCredential) {
+            btnBiometria.style.display = 'block';
+        } else {
+            btnBiometria.style.display = 'none';
+        }
+    }
+    inputPin.focus();
+}
+
+// Botón Cancelar (Anula cualquier intento de acceso)
+if (btnCancelarBloqueo) {
+    btnCancelarBloqueo.onclick = () => {
+        destinoAccion = null; 
+        modalBloqueo.style.display = 'none';
+    };
+}
+
+// Botón Desbloquear PIN
+if (btnDesbloquearPin) {
+    btnDesbloquearPin.onclick = async () => {
+        let pinGuardado = localStorage.getItem('refri_pharma_pin');
+        const valor = inputPin.value.trim();
+
+        if (valor.length !== 4 || isNaN(valor)) {
+            alert("Por favor ingresa exactamente 4 números.");
+            return;
+        }
+
+        if (!pinGuardado) {
+            localStorage.setItem('refri_pharma_pin', valor);
+            if (window.PublicKeyCredential && confirm("¿Deseas vincular la huella o Face ID de este equipo?")) {
+                await registrarBiometria();
+            }
+            modalBloqueo.style.display = 'none';
+            if (destinoAccion) {
+                let ejecutar = destinoAccion;
+                destinoAccion = null;
+                ejecutar();
+            }
+        } else {
+            if (valor === pinGuardado) {
+                modalBloqueo.style.display = 'none';
+                if (destinoAccion) {
+                    let ejecutar = destinoAccion;
+                    destinoAccion = null;
+                    ejecutar();
+                }
+            } else {
+                alert("❌ PIN incorrecto.");
+                inputPin.value = '';
+            }
+        }
+    };
+}
+
+if (inputPin) {
+    inputPin.onkeypress = (e) => {
+        if (e.key === 'Enter') btnDesbloquearPin.click();
+    };
+}
+
+async function registrarBiometria() {
+    try {
+        const challenge = new Uint8Array(32);
+        window.crypto.getRandomValues(challenge);
+        await navigator.credentials.create({
+            publicKey: {
+                challenge: challenge,
+                rp: { name: "Refri Pharma" },
+                user: { id: new Uint8Array(16), name: "admin", displayName: "Admin" },
+                pubKeyCredParams: [{ type: "public-key", alg: -7 }]
+            }
+        });
+        localStorage.setItem('refri_pharma_bio', 'true');
+        alert("✅ ¡Biometría vinculada con éxito!");
+    } catch (e) {
+        console.log("Registro biométrico omitido");
+    }
+}
+
+if (btnBiometria) {
+    btnBiometria.onclick = async () => {
+        try {
+            const challenge = new Uint8Array(32);
+            window.crypto.getRandomValues(challenge);
+            await navigator.credentials.get({
+                publicKey: { challenge: challenge, userVerification: "required" }
+            });
+            modalBloqueo.style.display = 'none';
+            if (destinoAccion) {
+                let ejecutar = destinoAccion;
+                destinoAccion = null;
+                ejecutar();
+            }
+        } catch (error) {
+            alert("No se pudo verificar la huella/Face ID. Usa tu PIN.");
+        }
+    };
+}
 
 
 // =========================================================
@@ -396,424 +544,4 @@ if (listaPrestamosDOM) {
         if (e.target.classList.contains('btn-borrar-sub')) {
             if (confirm("¿Estás seguro de que deseas eliminar este préstamo específico del historial?")) {
                 const docRef = doc(db, "prestamos", e.target.getAttribute('data-id'));
-                const indexSub = parseInt(e.target.getAttribute('data-index'));
-                
-                const docSnap = await getDoc(docRef);
-                if(docSnap.exists()){
-                    let data = docSnap.data();
-                    data.historial.splice(indexSub, 1);
-                    
-                    if(data.historial.length === 0) {
-                        await deleteDoc(docRef);
-                    } else {
-                        let todosPagados = data.historial.every(h => {
-                            let saldo = h.saldoPendiente !== undefined ? h.saldoPendiente : h.montoTotal;
-                            return saldo === 0;
-                        });
-                        await updateDoc(docRef, { 
-                            historial: data.historial, 
-                            estado: todosPagados ? "Pagado" : "Deuda activa" 
-                        });
-                    }
-                }
-            }
-        }
-        
-        if (e.target.classList.contains('btn-ver-detalles')) {
-            const divDetalles = document.getElementById(e.target.getAttribute('data-target'));
-            if (divDetalles.style.display === 'none') {
-                divDetalles.style.display = 'block';
-                e.target.innerText = 'Ocultar Detalles 🔼';
-            } else {
-                divDetalles.style.display = 'none';
-                e.target.innerText = 'Ver Detalles 🔽';
-            }
-        }
-
-        const procesarPago = async (docId, indexSub, montoAbono, esAbono = true, esGlobal = false) => {
-            const docRef = doc(db, "prestamos", docId);
-            const docSnap = await getDoc(docRef);
-            if(docSnap.exists()){
-                let data = docSnap.data();
-                let hoy = new Date().toLocaleDateString('es-VE');
-
-                if(esGlobal) {
-                    let montoRestante = montoAbono;
-                    data.historial.forEach(h => {
-                        if(h.saldoPendiente === undefined) h.saldoPendiente = h.montoTotal;
-                        let saldo = h.saldoPendiente;
-                        
-                        if(saldo > 0) {
-                            if(!h.abonos) h.abonos = [];
-                            if(esAbono && montoRestante > 0) {
-                                if(montoRestante >= saldo) {
-                                    montoRestante -= saldo;
-                                    h.abonos.push({fecha: hoy, monto: saldo});
-                                    h.saldoPendiente = 0;
-                                    h.estado = "Pagado";
-                                } else {
-                                    h.saldoPendiente = saldo - montoRestante;
-                                    h.abonos.push({fecha: hoy, monto: montoRestante});
-                                    montoRestante = 0;
-                                }
-                            } else if (!esAbono) {
-                                h.abonos.push({fecha: hoy, monto: saldo});
-                                h.saldoPendiente = 0;
-                                h.estado = "Pagado";
-                            }
-                        }
-                    });
-                } else {
-                    let target = data.historial[parseInt(indexSub)];
-                    if(target) {
-                        if(target.saldoPendiente === undefined) target.saldoPendiente = target.montoTotal;
-                        if(!target.abonos) target.abonos = [];
-                        
-                        if(target.saldoPendiente > 0) {
-                            if(esAbono) {
-                                if(montoAbono > target.saldoPendiente) {
-                                    alert(`El abono supera la deuda. Se ajustará al saldo pendiente de $${target.saldoPendiente.toFixed(2)}.`);
-                                    montoAbono = target.saldoPendiente;
-                                }
-                                target.saldoPendiente -= montoAbono;
-                                target.abonos.push({fecha: hoy, monto: montoAbono});
-                                if(target.saldoPendiente <= 0) target.estado = "Pagado";
-                            } else {
-                                target.abonos.push({fecha: hoy, monto: target.saldoPendiente});
-                                target.saldoPendiente = 0;
-                                target.estado = "Pagado";
-                            }
-                        }
-                    }
-                }
-                let todosPagados = data.historial.every(h => h.saldoPendiente === 0);
-                await updateDoc(docRef, { historial: data.historial, estado: todosPagados ? "Pagado" : "Deuda activa" });
-            }
-        };
-
-        if (e.target.classList.contains('btn-abono-global')) {
-            let abono = prompt("Ingresa el monto a abonar a la deuda general:");
-            if(abono !== null && parseFloat(abono) > 0) {
-                await procesarPago(e.target.getAttribute('data-id'), null, parseFloat(abono), true, true);
-            }
-        }
-        
-        if (e.target.classList.contains('btn-pagar-global')) {
-            if (confirm("¿Confirmas que se pagó la deuda completa?")) {
-                await procesarPago(e.target.getAttribute('data-id'), null, null, false, true);
-            }
-        }
-
-        if (e.target.classList.contains('btn-abono-sub')) {
-            let abono = prompt("Ingresa el monto a abonar al préstamo específico:");
-            if(abono !== null && parseFloat(abono) > 0) {
-                await procesarPago(e.target.getAttribute('data-id'), e.target.getAttribute('data-index'), parseFloat(abono), true, false);
-            }
-        }
-
-        if (e.target.classList.contains('btn-pagado-sub')) {
-            if (confirm("¿Confirmas que se liquidó este préstamo específico?")) {
-                await procesarPago(e.target.getAttribute('data-id'), e.target.getAttribute('data-index'), null, false, false);
-            }
-        }
-    });
-}
-
-
-// =========================================================
-// MÓDULO DE CLIENTES (CRM)
-// =========================================================
-const formClientes = document.getElementById('form-clientes');
-const listaClientesDOM = document.getElementById('lista-clientes');
-const datalistContactos = document.getElementById('sugerencias-contactos');
-window.directorioClientes = {}; 
-
-if (formClientes) {
-    const btnCancelarEdicion = document.getElementById('btn-cancelar-edicion');
-    const btnGuardarCliente = document.getElementById('btn-guardar-cliente');
-    const inputEditId = document.getElementById('edit-cliente-id');
-    const inputNombreOriginal = document.getElementById('edit-cliente-nombre-original');
-
-    const resetFormularioClientes = () => {
-        formClientes.reset();
-        inputEditId.value = "";
-        if (inputNombreOriginal) inputNombreOriginal.value = ""; 
-        btnGuardarCliente.innerText = "Guardar Cliente";
-        btnGuardarCliente.style.backgroundColor = "#10b981";
-        if(btnCancelarEdicion) btnCancelarEdicion.style.display = "none";
-    };
-
-    formClientes.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const nombre = document.getElementById('nombre-cliente').value.trim();
-        const telefono = document.getElementById('telefono-cliente').value;
-        const ubicacion = document.getElementById('ubicacion-cliente').value;
-        const editId = inputEditId.value; 
-        const nombreOriginal = inputNombreOriginal ? inputNombreOriginal.value : ""; 
-
-        try {
-            if (editId) {
-                await updateDoc(doc(db, "clientes", editId), { nombre: nombre, telefono: telefono, ubicacion: ubicacion });
-                if (nombreOriginal) {
-                    const qSyncReg = query(collection(db, "registros"), where("contacto", "==", nombreOriginal));
-                    const consultaSyncReg = await getDocs(qSyncReg);
-                    consultaSyncReg.forEach(docRegistro => { updateDoc(doc(db, "registros", docRegistro.id), { contacto: nombre, telefono: telefono, ubicacion: ubicacion }); });
-
-                    const qSyncPres = query(collection(db, "prestamos"), where("contacto", "==", nombreOriginal));
-                    const consultaSyncPres = await getDocs(qSyncPres);
-                    consultaSyncPres.forEach(docPres => { updateDoc(doc(db, "prestamos", docPres.id), { contacto: nombre, telefono: telefono, ubicacion: ubicacion }); });
-                }
-                alert("¡Cliente actualizado!");
-            } else {
-                await addDoc(collection(db, "clientes"), { nombre: nombre, telefono: telefono, ubicacion: ubicacion });
-                alert("¡Cliente guardado exitosamente!");
-            }
-            resetFormularioClientes();
-        } catch (error) { console.error(error); }
-    });
-    if (btnCancelarEdicion) btnCancelarEdicion.addEventListener('click', resetFormularioClientes);
-}
-
-onSnapshot(collection(db, "clientes"), (querySnapshot) => {
-    if (listaClientesDOM) listaClientesDOM.innerHTML = '';
-    let htmlSugerencias = '';
-    window.directorioClientes = {}; 
-
-    querySnapshot.forEach((documento) => {
-        const dato = documento.data();
-        window.directorioClientes[dato.nombre] = { telefono: dato.telefono, ubicacion: dato.ubicacion };
-        htmlSugerencias += `<option value="${dato.nombre}">`;
-
-        let numLimpio = dato.telefono.replace(/[- ]/g, "");
-        if(numLimpio.startsWith("0")) numLimpio = numLimpio.substring(1);
-        const enlaceWa = `https://wa.me/58${numLimpio}`;
-        const enlaceMapa = dato.ubicacion.startsWith('http') ? dato.ubicacion : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dato.ubicacion)}`;
-
-        if (listaClientesDOM) {
-            listaClientesDOM.innerHTML += `
-                <div class="tarjeta-registro">
-                    <h3>${dato.nombre}</h3>
-                    <p><strong>Tel:</strong> ${dato.telefono}</p>
-                    <p style="font-size: 0.85rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><strong>Ubi:</strong> ${dato.ubicacion}</p>
-                    <div style="display: flex; gap: 8px; margin-top: 10px;">
-                        <a href="${enlaceWa}" target="_blank" style="flex: 1; background-color: #25D366; color: white; text-align: center; padding: 6px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.85rem;">📲 WA</a>
-                        <a href="${enlaceMapa}" target="_blank" style="flex: 1; background-color: #f59e0b; color: white; text-align: center; padding: 6px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.85rem;">📍 Mapa</a>
-                    </div>
-                    <div style="display: flex; gap: 8px; margin-top: 8px;">
-                        <button class="btn-editar-cliente" data-id="${documento.id}" data-nombre="${dato.nombre}" data-telefono="${dato.telefono}" data-ubicacion="${dato.ubicacion}" style="flex: 1; background-color: #3b82f6; color: white; border: none; border-radius: 6px; padding: 6px; font-size: 0.85rem; cursor: pointer;">✏️ Editar</button>
-                        <button class="btn-borrar-cliente" data-id="${documento.id}" style="flex: 1; background-color: #ef4444; color: white; border: none; border-radius: 6px; padding: 6px; font-size: 0.85rem; cursor: pointer;">🗑️ Borrar</button>
-                    </div>
-                </div>
-            `;
-        }
-    });
-    if (datalistContactos) datalistContactos.innerHTML = htmlSugerencias;
-});
-
-if (listaClientesDOM) {
-    listaClientesDOM.addEventListener('click', async (e) => {
-        if (e.target.classList.contains('btn-borrar-cliente')) {
-            if (confirm("¿Borrar este cliente del directorio?")) await deleteDoc(doc(db, "clientes", e.target.getAttribute('data-id')));
-        }
-        if (e.target.classList.contains('btn-editar-cliente')) {
-            document.getElementById('edit-cliente-id').value = e.target.getAttribute('data-id');
-            if (document.getElementById('edit-cliente-nombre-original')) document.getElementById('edit-cliente-nombre-original').value = e.target.getAttribute('data-nombre');
-            document.getElementById('nombre-cliente').value = e.target.getAttribute('data-nombre');
-            document.getElementById('telefono-cliente').value = e.target.getAttribute('data-telefono');
-            document.getElementById('ubicacion-cliente').value = e.target.getAttribute('data-ubicacion');
-            document.getElementById('btn-guardar-cliente').innerText = "Actualizar Cliente";
-            document.getElementById('btn-guardar-cliente').style.backgroundColor = "#3b82f6";
-            const btnCancel = document.getElementById('btn-cancelar-edicion');
-            if(btnCancel) btnCancel.style.display = "block";
-            document.getElementById('form-clientes').scrollIntoView({ behavior: 'smooth' });
-        }
-    });
-}
-
-// Autocompletado de formularios
-const inputContacto = document.getElementById('contacto');
-if (inputContacto) {
-    inputContacto.addEventListener('input', (e) => {
-        const nom = e.target.value;
-        if (window.directorioClientes && window.directorioClientes[nom]) {
-            document.getElementById('telefono').value = window.directorioClientes[nom].telefono;
-            document.getElementById('ubicacion').value = window.directorioClientes[nom].ubicacion;
-        }
-    });
-}
-
-const inputContactoPrestamo = document.getElementById('contacto-prestamo');
-if (inputContactoPrestamo) {
-    inputContactoPrestamo.addEventListener('input', (e) => {
-        const nom = e.target.value;
-        if (window.directorioClientes && window.directorioClientes[nom]) {
-            document.getElementById('telefono-prestamo').value = window.directorioClientes[nom].telefono;
-            document.getElementById('ubicacion-prestamo').value = window.directorioClientes[nom].ubicacion;
-        }
-    });
-}
-
-// =========================================================
-// SISTEMA DE BÚSQUEDA EN VIVO
-// =========================================================
-const configurarBuscador = (inputElement, selectorTarjetas) => {
-    if (inputElement) {
-        inputElement.addEventListener('input', (e) => {
-            const textoBusqueda = e.target.value.toLowerCase();
-            document.querySelectorAll(selectorTarjetas).forEach(tarjeta => {
-                tarjeta.style.display = tarjeta.innerText.toLowerCase().includes(textoBusqueda) ? 'block' : 'none';
-            });
-        });
-    }
-};
-
-configurarBuscador(document.getElementById('buscador-registros'), '#lista-registros .tarjeta-registro');
-configurarBuscador(document.getElementById('buscador-clientes'), '#lista-clientes .tarjeta-registro');
-configurarBuscador(document.getElementById('buscador-prestamos'), '#lista-prestamos .tarjeta-registro');
-
-// =========================================================
-// SISTEMA DE SEGURIDAD PROTEGIENDO PRÉSTAMOS Y CLIENTES
-// =========================================================
-const modalBloqueo = document.getElementById('modal-bloqueo');
-const mensajeBloqueo = document.getElementById('mensaje-bloqueo');
-const inputPin = document.getElementById('input-pin');
-const btnDesbloquearPin = document.getElementById('btn-desbloquear-pin');
-const btnBiometria = document.getElementById('btn-biometria');
-const btnCancelarBloqueo = document.getElementById('btn-cancelar-bloqueo');
-const tituloModalSeguridad = document.getElementById('titulo-modal-seguridad');
-
-let destinoPendiente = null;
-
-if(btnPrestamo) {
-    btnPrestamo.addEventListener('click', () => {
-        solicitarAutorizacion(() => {
-            pantallaSeleccion.style.display = 'none';
-            appPrestamo.style.display = 'block';
-        }, "Sección de Préstamos");
-    });
-}
-
-if(btnClientes) {
-    btnClientes.addEventListener('click', () => {
-        solicitarAutorizacion(() => {
-            pantallaSeleccion.style.display = 'none';
-            appClientes.style.display = 'block';
-        }, "Directorio de Clientes");
-    });
-}
-
-const solicitarAutorizacion = (callbackAcceso, nombreSeccion) => {
-    let pinGuardado = localStorage.getItem('refri_pharma_pin');
-    let biometriaActiva = localStorage.getItem('refri_pharma_bio') === 'true';
-
-    destinoPendiente = callbackAcceso;
-    tituloModalSeguridad.innerText = `Acceso a ${nombreSeccion}`;
-    inputPin.value = '';
-    modalBloqueo.style.display = 'flex';
-
-    if (!pinGuardado) {
-        mensajeBloqueo.innerText = "Crea un PIN numérico de 4 dígitos:";
-        btnDesbloquearPin.innerText = "Crear PIN y Acceder";
-        if(btnBiometria) btnBiometria.style.display = 'none';
-    } else {
-        mensajeBloqueo.innerText = "Ingresa tu PIN de seguridad";
-        btnDesbloquearPin.innerText = "Desbloquear";
-        if (biometriaActiva && window.PublicKeyCredential) {
-            btnBiometria.style.display = 'block';
-        } else {
-            btnBiometria.style.display = 'none';
-        }
-    }
-    inputPin.focus();
-};
-
-if (btnCancelarBloqueo) {
-    btnCancelarBloqueo.addEventListener('click', () => {
-        modalBloqueo.style.display = 'none';
-        destinoPendiente = null; // ANULA EL ACCESO AL CANCELAR
-    });
-}
-
-if (btnDesbloquearPin) {
-    btnDesbloquearPin.addEventListener('click', async () => {
-        let pinGuardado = localStorage.getItem('refri_pharma_pin');
-        const valor = inputPin.value.trim();
-
-        if (valor.length !== 4 || isNaN(valor)) {
-            alert("Por favor ingresa exactamente 4 números.");
-            return;
-        }
-
-        if (!pinGuardado) {
-            localStorage.setItem('refri_pharma_pin', valor);
-            if (window.PublicKeyCredential && confirm("¿Deseas vincular la huella o Face ID de este equipo para accesos futuros más rápidos?")) {
-                await ejecutarBiometriaRegistro();
-            }
-            modalBloqueo.style.display = 'none';
-            if (destinoPendiente) {
-                let accion = destinoPendiente;
-                destinoPendiente = null;
-                accion();
-            }
-        } else {
-            if (valor === pinGuardado) {
-                modalBloqueo.style.display = 'none';
-                if (destinoPendiente) {
-                    let accion = destinoPendiente;
-                    destinoPendiente = null;
-                    accion();
-                }
-            } else {
-                alert("❌ PIN incorrecto.");
-                inputPin.value = '';
-            }
-        }
-    });
-}
-
-if (inputPin) {
-    inputPin.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') btnDesbloquearPin.click();
-    });
-}
-
-const ejecutarBiometriaRegistro = async () => {
-    try {
-        const challenge = new Uint8Array(32);
-        window.crypto.getRandomValues(challenge);
-        await navigator.credentials.create({
-            publicKey: {
-                challenge: challenge,
-                rp: { name: "Refri Pharma" },
-                user: { id: new Uint8Array(16), name: "admin", displayName: "Admin" },
-                pubKeyCredParams: [{ type: "public-key", alg: -7 }],
-                authenticatorSelection: { userVerification: "required" },
-                timeout: 60000
-            }
-        });
-        localStorage.setItem('refri_pharma_bio', 'true');
-        alert("✅ ¡Biometría vinculada con éxito!");
-    } catch (e) {
-        console.log("Registro biométrico omitido o cancelado", e);
-    }
-};
-
-if (btnBiometria) {
-    btnBiometria.addEventListener('click', async () => {
-        try {
-            const challenge = new Uint8Array(32);
-            window.crypto.getRandomValues(challenge);
-            await navigator.credentials.get({
-                publicKey: { challenge: challenge, userVerification: "required", timeout: 60000 }
-            });
-            modalBloqueo.style.display = 'none';
-            if (destinoPendiente) {
-                let accion = destinoPendiente;
-                destinoPendiente = null;
-                accion();
-            }
-        } catch (error) {
-            alert("No se pudo verificar la huella/Face ID. Usa tu PIN.");
-        }
-    });
-}
+                const indexSub = parseInt(e.target.getAttribute('
