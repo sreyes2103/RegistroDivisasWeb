@@ -3,216 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Divisas - Refri Pharma</title>
+    <title>Refri Pharma - Gestión</title>
+    <!-- Vinculamos la fuente Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js')
-          .then(() => console.log("Service Worker registrado con éxito"))
-          .catch((err) => console.log("Error al registrar Service Worker", err));
-      }
-    </script>
 </head>
 <body>
-    <!-- PANTALLA DE SELECCIÓN -->
-    <div id="pantalla-seleccion" class="contenedor-bienvenida">
-        <h1>Refri Pharma</h1>
-        <p style="font-size: 1.2rem; color: #475569; margin-bottom: 30px;">¿Qué deseas registrar?</p>
-        
-        <div class="opciones-menu">
-            <div class="tarjeta-opcion" id="btn-compra">
-                <span class="icono-opcion">💵</span>
-                <h3>Compra de Efectivo</h3>
-            </div>
-            
-            <div class="tarjeta-opcion" id="btn-prestamo">
-                <span class="icono-opcion">🤝</span>
-                <h3>Préstamo</h3>
+
+    <!-- PANTALLA DE SELECCIÓN / MENÚ PRINCIPAL ESTILO FINTECH -->
+    <div id="pantalla-seleccion">
+        <div>
+            <div class="header-fintech">
+                <div class="logo-badge">❄️</div>
+                <h1>Refri Pharma</h1>
+                <p>Control Financiero y Gestión</p>
             </div>
 
-            <div class="tarjeta-opcion" id="btn-clientes">
-                <span class="icono-opcion">👥</span>
-                <h3>Clientes</h3>
-            </div>
-        </div>
-    </div> 
-
-    <!-- APLICACIÓN PRINCIPAL (COMPRA DE EFECTIVO) -->
-    <div id="app-principal" style="display: none;">
-        <div class="contenedor">
-            <button id="btn-volver" style="background-color: #64748b; margin-bottom: 20px; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem;">⬅ Volver al menú</button>
-            
-            <h1>Agrega los datos del vendedor</h1>
-            
-            <form id="formulario">
-                <label for="contacto">Contacto / Amistad:</label>
-                <input type="text" id="contacto" placeholder="Ej. Juan Pérez" list="sugerencias-contactos" required>
-                <datalist id="sugerencias-contactos"></datalist>
-    
-                <label for="telefono">Teléfono:</label>
-                <input type="tel" id="telefono" placeholder="0414-1234567" required>
-
-                <label for="monto">Monto (Divisas):</label>
-                <input type="number" id="monto" placeholder="Ej. 50.00" step="0.01" required>
-
-                <label for="estado">Estado:</label>
-                <select id="estado">
-                    <option value="Pendiente por retirar">Pendiente por retirar</option>
-                    <option value="Me debe">Me debe</option>
-                    <option value="Pagado">Pagado</option>
-                </select>
-
-                <label for="fecha">Fecha:</label>
-                <input type="date" id="fecha" required>
-
-                <label for="ubicacion">Ubicación (Enlace o dirección):</label>
-                <input type="text" id="ubicacion" placeholder="Pega el link de Maps o escribe la zona" required>
-
-                <button type="submit">Guardar Registro</button>
-            </form>
-
-            <hr>
-
-            <h2>Historial de Registros</h2>
-            <div style="background-color: #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
-                <h3 style="margin: 0; color: #1e293b; font-size: 1.3rem;">Total Pendiente: $<span id="total-pendiente">0.00</span></h3>
-            </div>
-            
-            <input type="text" id="buscador-registros" placeholder="🔍 Buscar por nombre, estado, fecha o ubicación..." style="margin-bottom: 15px; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; font-size: 1rem; background-color: #f8fafc;">
-            
-            <div id="lista-registros">
-                <p>No hay registros todavía.</p>
-            </div>
-        </div>
-    </div> 
-
-    <!-- SECCIÓN DE PRÉSTAMOS -->
-    <div id="app-prestamo" style="display: none;">
-        <div class="contenedor">
-            <button id="btn-volver-prestamo" style="background-color: #64748b; margin-bottom: 20px; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem;">⬅ Volver al menú</button>
-            
-            <h1>Registro de Préstamo</h1>
-            
-            <form id="formulario-prestamo">
-                <label for="contacto-prestamo">Cliente / Deudor:</label>
-                <input type="text" id="contacto-prestamo" placeholder="Ej. Pedro Gómez" list="sugerencias-contactos" required>
-    
-                <label for="telefono-prestamo">Teléfono:</label>
-                <input type="tel" id="telefono-prestamo" placeholder="0414-1234567" required>
-
-                <label for="monto-prestamo">Monto prestado (Capital):</label>
-                <input type="number" id="monto-prestamo" placeholder="Ej. 100.00" step="0.01" required>
-
-                <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px; background-color: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">
-                    <input type="checkbox" id="check-interes" style="width: 20px; height: 20px; margin: 0; cursor: pointer;">
-                    <label for="check-interes" style="margin: 0; cursor: pointer; font-size: 1rem;">Aplicar porcentaje de interés</label>
+            <!-- Tarjeta Hero estilo Billetera -->
+            <div class="hero-card-fintech">
+                <div class="hero-label">Panel Administrativo</div>
+                <div class="hero-title">Operaciones & Capital</div>
+                <div class="hero-pills">
+                    <span class="hero-pill">🔒 PIN Activo</span>
+                    <span class="hero-pill">☁️ Nube Sincronizada</span>
                 </div>
+            </div>
 
-                <div id="caja-porcentaje" style="display: none;">
-                    <label for="porcentaje-interes">Porcentaje (%):</label>
-                    <input type="number" id="porcentaje-interes" placeholder="Ej. 10" step="0.1">
-                </div>
+            <div class="section-label">Acceso Rápido</div>
 
-                <div style="background-color: #eff6ff; border: 2px dashed #3b82f6; padding: 15px; text-align: center; border-radius: 8px; margin-bottom: 15px;">
-                    <h3 id="display-total-prestamo" style="margin: 0; color: #1e3a8a; font-size: 1.4rem;">Monto a pagar: $0.00</h3>
-                </div>
-
-                <label for="estado-prestamo">Estado:</label>
-                <select id="estado-prestamo">
-                    <option value="Deuda activa">Deuda activa</option>
-                    <option value="Pagado">Pagado</option>
-                </select>
-
-                <div style="display: flex; gap: 10px;">
-                    <div style="flex: 1;">
-                        <label for="fecha-prestamo">Fecha de préstamo:</label>
-                        <input type="date" id="fecha-prestamo" required>
+            <div class="menu-grid">
+                <button id="btn-compra" class="btn-menu-fintech">
+                    <div class="btn-menu-left">
+                        <div class="icon-box icon-compra">💵</div>
+                        <div class="btn-menu-text">
+                            <h3>Compras y Divisas</h3>
+                            <p>Efectivo y retiros pendientes</p>
+                        </div>
                     </div>
-                    <div style="flex: 1;">
-                        <label for="fecha-cancelar">Fecha a cancelar:</label>
-                        <input type="date" id="fecha-cancelar" required>
+                    <div class="arrow-circle">➔</div>
+                </button>
+
+                <button id="btn-prestamo" class="btn-menu-fintech">
+                    <div class="btn-menu-left">
+                        <div class="icon-box icon-prestamo">🤝</div>
+                        <div class="btn-menu-text">
+                            <h3>Préstamos</h3>
+                            <p>Capital, intereses y abonos</p>
+                        </div>
                     </div>
-                </div>
+                    <div class="arrow-circle">➔</div>
+                </button>
 
-                <label for="ubicacion-prestamo">Ubicación (Enlace o dirección):</label>
-                <input type="text" id="ubicacion-prestamo" placeholder="Pega el link de Maps o escribe la zona" required>
-
-                <label for="nota-prestamo">Nota / Observación (Opcional):</label>
-                <textarea id="nota-prestamo" placeholder="Ej. Dejó una herramienta en garantía..." style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 16px; background-color: #f8fafc; font-family: inherit; resize: vertical;" rows="2"></textarea>
-
-                <button type="submit" style="background-color: #f59e0b;">Guardar Préstamo</button>
-            </form>
-
-            <hr>
-
-            <h2>Préstamos Activos</h2>
-            <div style="background-color: #fef3c7; border: 1px solid #f59e0b; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
-    <span style="font-weight: bold; color: #92400e; font-size: 1.05rem;">Dinero en la calle: $<span id="total-dinero-calle">0.00</span></span>
-    <button id="btn-toggle-visibilidad" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; padding: 4px 8px;" title="Mostrar/Ocultar monto">👁️</button>
-</div>
-
-            <input type="text" id="buscador-prestamos" placeholder="🔍 Buscar préstamo..." style="margin-bottom: 15px; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; font-size: 1rem; background-color: #f8fafc;">
-            
-            <div id="lista-prestamos">
-                <p>No hay préstamos activos todavía.</p>
+                <button id="btn-clientes" class="btn-menu-fintech">
+                    <div class="btn-menu-left">
+                        <div class="icon-box icon-clientes">👥</div>
+                        <div class="btn-menu-text">
+                            <h3>Clientes</h3>
+                            <p>Directorio, WhatsApp y mapas</p>
+                        </div>
+                    </div>
+                    <div class="arrow-circle">➔</div>
+                </button>
             </div>
         </div>
-    </div>      
 
-    <!-- SECCIÓN DE CLIENTES (CRM) -->
-    <div id="app-clientes" style="display: none;">
-        <div class="contenedor">
-            <button id="btn-volver-clientes" style="background-color: #64748b; margin-bottom: 20px; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem;">⬅ Volver al menú</button>
-            
-            <h1>Directorio de Clientes</h1>
-            
-            <form id="form-clientes">
-                <input type="hidden" id="edit-cliente-id" value="">
-                <input type="hidden" id="edit-cliente-nombre-original" value="">
-
-                <label for="nombre-cliente">Nombre del Cliente / Vendedor:</label>
-                <input type="text" id="nombre-cliente" placeholder="Ej. Carlos Repuestos" required>
-
-                <label for="telefono-cliente">Teléfono:</label>
-                <input type="tel" id="telefono-cliente" placeholder="0414-1234567" required>
-
-                <label for="ubicacion-cliente">Ubicación (Enlace o dirección):</label>
-                <input type="text" id="ubicacion-cliente" placeholder="Pega el link de Maps o escribe la zona" required>
-
-                <div style="display: flex; gap: 10px;">
-                    <button type="submit" id="btn-guardar-cliente" style="background-color: #10b981; flex: 1;">Guardar Cliente</button>
-                    <button type="button" id="btn-cancelar-edicion" style="background-color: #64748b; flex: 1; display: none;">Cancelar</button>
-                </div>
-            </form>
-
-            <hr>
-
-            <h2>Clientes Registrados</h2>
-            <input type="text" id="buscador-clientes" placeholder="🔍 Buscar cliente por nombre, teléfono o zona..." style="margin-bottom: 15px; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%; font-size: 1rem; background-color: #f8fafc;">
-            
-            <div id="lista-clientes">
-                <p>No hay clientes registrados todavía.</p>
-            </div>
-        </div>
+        <p style="text-align: center; color: #64748b; font-size: 0.78rem; margin-top: 30px;">
+            Refri Pharma PWA • Coro
+        </p>
     </div>
 
-<!-- VENTANA FLOTANTE DE BLOQUEO (PIN FIJO) -->
-    <div id="modal-bloqueo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 9999; padding: 20px; box-sizing: border-box;">
-        <div style="background-color: #1e293b; padding: 30px; border-radius: 16px; width: 100%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); color: white;">
+
+    <!-- 1. MÓDULO DE COMPRAS Y DIVISAS -->
+    <div id="app-principal" style="display: none;">
+        <div class="top-bar-interna">
+            <button id="btn-volver">⬅ Volver</button>
+            <h2>Compras y Divisas</h2>
+        </div>
+
+        <form id="formulario">
+            <label>Contacto / Cliente:</label>
+            <input type="text" id="contacto" list="sugerencias-contactos" placeholder="Nombre del cliente" required autocomplete="off">
+            <datalist id="sugerencias-contactos"></datalist>
+
+            <label>Teléfono:</label>
+            <input type="tel" id="telefono" placeholder="Ej: 04121234567" required>
+
+            <label>Monto ($):</label>
+            <input type="number" step="0.01" id="monto" placeholder="0.00" required>
+
+            <label>Estado:</label>
+            <select id="estado">
+                <option value="Pendiente por retirar">Pendiente por retirar</option>
+                <option value="Retirado">Retirado</option>
+                <option value="Pagado">Pagado</option>
+            </select>
+
+            <label>Fecha:</label>
+            <input type="date" id="fecha" required>
+
+            <label>Ubicación (Link o Dirección):</label>
+            <input type="text" id="ubicacion" placeholder="Pega el link de Maps o zona" required>
+
+            <button type="submit">Guardar Registro</button>
+        </form>
+
+        <input type="text" id="buscador-registros" placeholder="🔍 Buscar registro...">
+
+        <div class="banner-total-fintech" style="margin-bottom: 12px;">
+            <span>Total Pendiente: $<span id="total-pendiente">0.00</span></span>
+        </div>
+
+        <div id="lista-registros"></div>
+    </div>
+
+
+    <!-- 2. MÓDULO DE PRÉSTAMOS -->
+    <div id="app-prestamo" style="display: none;">
+        <div class="top-bar-interna">
+            <button id="btn-volver-prestamo">⬅ Volver</button>
+            <h2>Gestión de Préstamos</h2>
+        </div>
+
+        <form id="formulario-prestamo">
+            <label>Contacto / Cliente:</label>
+            <input type="text" id="contacto-prestamo" list="sugerencias-contactos" placeholder="Nombre del cliente" required autocomplete="off">
+
+            <label>Teléfono:</label>
+            <input type="tel" id="telefono-prestamo" placeholder="Ej: 04121234567" required>
+
+            <label>Capital del Préstamo ($):</label>
+            <input type="number" step="0.01" id="monto-prestamo" placeholder="0.00" required>
+
+            <!-- Checkbox de Interés -->
+            <div style="margin: 15px 0; display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" id="check-interes" style="width: 20px; height: 20px; accent-color: var(--accent-purple); cursor: pointer;">
+                <label for="check-interes" style="margin: 0; color: #f8fafc; font-weight: 600; cursor: pointer;">Aplicar Porcentaje de Interés</label>
+            </div>
+
+            <!-- Caja de Porcentaje Oculta por defecto -->
+            <div id="caja-porcentaje" style="display: none; margin-bottom: 15px;">
+                <label>Porcentaje de Interés (%):</label>
+                <input type="number" step="0.01" id="porcentaje-interes" placeholder="Ej: 15">
+            </div>
+
+            <p id="display-total-prestamo" style="font-weight: bold; color: var(--accent-lavender); margin: 10px 0; font-size: 1.05rem;">Monto a pagar: $0.00</p>
+
+            <label>Estado Inicial:</label>
+            <select id="estado-prestamo">
+                <option value="Deuda activa">Deuda activa</option>
+                <option value="Pagado">Pagado</option>
+            </select>
+
+            <label>Fecha de Préstamo:</label>
+            <input type="date" id="fecha-prestamo" required>
+
+            <label>Fecha Límite a Cancelar:</label>
+            <input type="date" id="fecha-cancelar" required>
+
+            <label>Ubicación (Enlace o dirección):</label>
+            <input type="text" id="ubicacion-prestamo" placeholder="Pega el link de Maps o la zona" required>
+
+            <label>Nota / Observación (Opcional):</label>
+            <textarea id="nota-prestamo" placeholder="Ej. Dejó una herramienta en garantía..." rows="2" style="width: 100%; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 12px; color: #fff;"></textarea>
+
+            <button type="submit">Guardar Préstamo</button>
+        </form>
+
+        <input type="text" id="buscador-prestamos" placeholder="🔍 Buscar préstamo...">
+
+        <!-- BANNER DE DINERO EN LA CALLE CON OJITO -->
+        <div class="banner-total-fintech">
+            <span>Dinero en la calle: $<span id="total-dinero-calle">0.00</span></span>
+            <button id="btn-toggle-visibilidad" style="background: rgba(255,255,255,0.12); border: none; border-radius: 10px; font-size: 1.2rem; cursor: pointer; padding: 6px 10px; color: white;" title="Mostrar/Ocultar monto">👁️</button>
+        </div>
+
+        <div id="lista-prestamos"></div>
+    </div>
+
+
+    <!-- 3. MÓDULO DE CLIENTES (CRM) -->
+    <div id="app-clientes" style="display: none;">
+        <div class="top-bar-interna">
+            <button id="btn-volver-clientes">⬅ Volver</button>
+            <h2>Directorio de Clientes</h2>
+        </div>
+
+        <form id="form-clientes">
+            <input type="hidden" id="edit-cliente-id">
+            <input type="hidden" id="edit-cliente-nombre-original">
+
+            <label>Nombre del Cliente:</label>
+            <input type="text" id="nombre-cliente" placeholder="Nombre completo o local" required autocomplete="off">
+
+            <label>Teléfono:</label>
+            <input type="tel" id="telefono-cliente" placeholder="Ej: 04121234567" required>
+
+            <label>Ubicación / Dirección:</label>
+            <input type="text" id="ubicacion-cliente" placeholder="Pega el link de Maps o zona" required>
+
+            <button type="submit" id="btn-guardar-cliente">Guardar Cliente</button>
+            <button type="button" id="btn-cancelar-edicion" style="display: none; width: 100%; margin-top: 10px; background-color: #475569; color: white; border: none; border-radius: 14px; padding: 12px; cursor: pointer; font-weight: 600;">Cancelar Edición</button>
+        </form>
+
+        <input type="text" id="buscador-clientes" placeholder="🔍 Buscar cliente...">
+
+        <div id="lista-clientes"></div>
+    </div>
+
+
+    <!-- VENTANA FLOTANTE DE BLOQUEO (PIN FIJO: 2103) -->
+    <div id="modal-bloqueo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; justify-content: center; align-items: center; z-index: 9999; padding: 20px; box-sizing: border-box;">
+        <div style="padding: 30px; width: 100%; max-width: 350px; text-align: center; color: white;">
             <div style="font-size: 3rem; margin-bottom: 10px;">🔐</div>
             <h3 id="titulo-modal-seguridad" style="margin: 0 0 5px 0; color: #f8fafc;">Área Protegida</h3>
             <p id="mensaje-bloqueo" style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;">Ingresa tu PIN de seguridad de 4 dígitos:</p>
             
-            <!-- CAMPO DE TEXTO PARA ESCRIBIR EL PIN -->
-            <input type="password" id="input-pin" maxlength="4" inputmode="numeric" placeholder="••••" style="width: 100%; padding: 15px; font-size: 1.8rem; text-align: center; letter-spacing: 12px; border-radius: 10px; border: 2px solid #334155; background-color: #0f172a; color: white; margin-bottom: 15px; box-sizing: border-box;">
+            <input type="password" id="input-pin" maxlength="4" inputmode="numeric" placeholder="••••" style="width: 100%; padding: 15px; font-size: 1.8rem; text-align: center; letter-spacing: 12px; margin-bottom: 15px; box-sizing: border-box;">
             
-            <button id="btn-desbloquear-pin" style="width: 100%; padding: 14px; background-color: #3b82f6; color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-bottom: 10px;">Desbloquear</button>
+            <button id="btn-desbloquear-pin" style="width: 100%; padding: 14px; border: none; color: white; font-size: 1rem; font-weight: bold; cursor: pointer; margin-bottom: 10px;">Desbloquear</button>
             
-            <button id="btn-cancelar-bloqueo" style="width: 100%; padding: 10px; background-color: transparent; color: #94a3b8; border: 1px solid #475569; border-radius: 8px; font-size: 0.85rem; cursor: pointer;">Cancelar</button>
+            <button id="btn-cancelar-bloqueo" style="width: 100%; padding: 10px; background-color: transparent; color: #94a3b8; border: 1px solid #475569; border-radius: 12px; font-size: 0.85rem; cursor: pointer;">Cancelar</button>
         </div>
     </div>
 
+    <!-- Script Principal -->
     <script type="module" src="app.js"></script>
 </body>
 </html>

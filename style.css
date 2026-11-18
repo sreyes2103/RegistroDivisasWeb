@@ -1,157 +1,414 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --bg-dark: #0b0a12;
+    --bg-card: #161424;
+    --bg-card-hover: #1e1b30;
+    --bg-input: #100e1c;
+    --border-subtle: rgba(167, 139, 250, 0.16);
+    --accent-purple: #8b5cf6;
+    --accent-lavender: #c4b5fd;
+    --accent-gradient: linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --danger: #ef4444;
+    --success: #10b981;
+    --warning: #f59e0b;
+}
+
 * {
-    margin: 0;
-    padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
-    background-color: #f0f2f5;
-    color: #333;
-    padding: 20px 10px;
+    background-color: var(--bg-dark);
+    background-image: 
+        radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.18) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+    color: var(--text-main);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-.contenedor {
-    max-width: 500px;
-    margin: 0 auto;
-    background-color: #ffffff;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+/* --- PANTALLA DE SELECCIÓN (MENÚ PRINCIPAL ESTILO FINTECH) --- */
+#pantalla-seleccion {
+    width: 100%;
+    max-width: 440px;
+    min-height: 100vh;
+    padding: 32px 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
-h1 {
-    font-size: 1.5rem;
-    color: #1e293b;
+.header-fintech {
     text-align: center;
+    margin-bottom: 24px;
+}
+
+.logo-badge {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 14px auto;
+    border-radius: 20px;
+    background: var(--accent-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    box-shadow: 0 10px 25px rgba(124, 58, 237, 0.4);
+}
+
+.header-fintech h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #ffffff;
+}
+
+.header-fintech p {
+    margin: 6px 0 0 0;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+}
+
+/* Tarjeta Hero Morada (Inspirada en la pantalla central de la referencia) */
+.hero-card-fintech {
+    background: linear-gradient(135deg, #6d28d9 0%, #4f46e5 55%, #2563eb 100%);
+    border-radius: 24px;
+    padding: 24px;
+    margin-bottom: 28px;
+    box-shadow: 0 16px 35px rgba(109, 40, 217, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-card-fintech::after {
+    content: "";
+    position: absolute;
+    top: -40%;
+    right: -20%;
+    width: 180px;
+    height: 180px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.hero-label {
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+}
+
+.hero-title {
+    font-size: 1.45rem;
+    font-weight: 700;
+    margin: 8px 0 16px 0;
+    color: #ffffff;
+}
+
+.hero-pills {
+    display: flex;
+    gap: 8px;
+}
+
+.hero-pill {
+    background: rgba(11, 10, 18, 0.35);
+    backdrop-filter: blur(8px);
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    color: #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Botones de Acceso Rápido (Quick Access) */
+.section-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: 0 0 14px 4px;
+    letter-spacing: 0.3px;
+}
+
+.menu-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.btn-menu-fintech {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    padding: 18px 20px;
+    color: var(--text-main);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+    transition: all 0.2s ease;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.btn-menu-fintech:active {
+    transform: scale(0.98);
+    background: var(--bg-card-hover);
+}
+
+.btn-menu-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.icon-compra { background: rgba(59, 130, 246, 0.16); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.25); }
+.icon-prestamo { background: rgba(139, 92, 246, 0.18); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.3); }
+.icon-clientes { background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); }
+
+.btn-menu-text h3 {
+    margin: 0 0 4px 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.btn-menu-text p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.arrow-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-lavender);
+    font-size: 0.9rem;
+}
+
+/* --- VISTAS INTERNAS (COMPRAS, PRÉSTAMOS, CLIENTES) --- */
+#app-principal, #app-prestamo, #app-clientes {
+    width: 100%;
+    max-width: 480px;
+    padding: 20px 18px 50px 18px;
+}
+
+.top-bar-interna {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin-bottom: 20px;
 }
 
+#btn-volver, #btn-volver-prestamo, #btn-volver-clientes {
+    background: var(--bg-card);
+    color: var(--text-main);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
 h2 {
-    font-size: 1.2rem;
-    color: #1e293b;
-    margin-top: 25px;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #e2e8f0;
-    padding-bottom: 8px;
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+    color: #ffffff;
+}
+
+/* Formularios y Cajas */
+form {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 22px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 label {
     display: block;
-    font-weight: 600;
-    margin-bottom: 5px;
-    font-size: 0.9rem;
-    color: #475569;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    margin-top: 12px;
 }
 
-input, select {
+label:first-child {
+    margin-top: 0;
+}
+
+input[type="text"],
+input[type="tel"],
+input[type="number"],
+input[type="date"],
+input[type="password"],
+select,
+textarea {
     width: 100%;
-    padding: 12px;
-    margin-bottom: 15px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 16px; /* 16px evita que el iPhone haga zoom automático al escribir */
-    background-color: #f8fafc;
-}
-
-input:focus, select:focus {
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 13px 14px;
+    color: #ffffff;
+    font-size: 0.95rem;
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    transition: border-color 0.2s ease;
 }
 
-button {
+input:focus, select:focus, textarea:focus {
+    border-color: var(--accent-purple);
+}
+
+/* Botón Principal Estilo Lavanda/Púrpura de la referencia */
+form button[type="submit"] {
     width: 100%;
-    background-color: #3b82f6;
-    color: white;
-    padding: 14px;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    margin-top: 10px;
-}
-
-button:hover {
-    background-color: #2563eb;
-}
-
-/* Estilos para las tarjetas del historial */
-.tarjeta-registro {
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    margin-top: 20px;
     padding: 15px;
-    margin-bottom: 12px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    border: none;
+    border-radius: 16px;
+    background: var(--accent-gradient);
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.35);
+    transition: transform 0.15s ease;
+}
+
+form button[type="submit"]:active {
+    transform: scale(0.98);
+}
+
+/* Banner de Totales (Dinero en la calle / Total pendiente) */
+.banner-total-fintech {
+    background: linear-gradient(135deg, #4c1d95 0%, #312e81 100%);
+    border: 1px solid rgba(196, 181, 253, 0.25);
+    border-radius: 18px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 10px 25px rgba(76, 29, 149, 0.3);
+}
+
+.banner-total-fintech span {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+/* Buscadores */
+#buscador-registros, #buscador-prestamos, #buscador-clientes {
+    margin-bottom: 18px;
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 14px 16px;
+}
+
+/* Tarjetas de Registros / Préstamos / Clientes */
+.tarjeta-registro {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 20px !important;
+    padding: 18px !important;
+    margin-bottom: 14px !important;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25) !important;
+    color: var(--text-main) !important;
 }
 
 .tarjeta-registro h3 {
-    color: #0f172a;
-    font-size: 1.1rem;
-    margin-bottom: 8px;
-    text-transform: capitalize;
+    margin: 0 0 8px 0;
+    font-size: 1.12rem;
+    font-weight: 700;
+    color: #ffffff;
 }
 
 .tarjeta-registro p {
-    font-size: 0.9rem;
-    color: #475569;
-    margin-bottom: 5px;
+    margin: 4px 0;
+    font-size: 0.88rem;
+    color: #cbd5e1;
 }
 
 .tarjeta-registro strong {
-    color: #1e293b;
-}
-/* Estilos de la Pantalla de Selección */
-.contenedor-bienvenida {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 90vh;
-    text-align: center;
+    color: #f8fafc;
 }
 
-.contenedor-bienvenida h1 {
-    font-size: 2.2rem;
-    color: #1e293b;
-    margin-bottom: 5px;
+/* Sub-tarjetas dentro de historial de préstamos */
+div[id^="detalles-"] {
+    background-color: var(--bg-input) !important;
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px !important;
 }
 
-.opciones-menu {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: 100%;
-    max-width: 350px;
+div[id^="detalles-"] > div {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 12px !important;
+    color: var(--text-main) !important;
 }
 
-.tarjeta-opcion {
-    background: white;
-    padding: 30px 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    border: 2px solid transparent;
+div[id^="detalles-"] p {
+    color: #cbd5e1 !important;
 }
 
-.tarjeta-opcion:active, .tarjeta-opcion:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-    border-color: #3b82f6;
+/* --- MODAL DE SEGURIDAD PIN --- */
+#modal-bloqueo {
+    background-color: rgba(11, 10, 18, 0.88) !important;
+    backdrop-filter: blur(10px) !important;
 }
 
-.icono-opcion {
-    font-size: 3rem;
-    display: block;
-    margin-bottom: 10px;
+#modal-bloqueo > div {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 24px !important;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6) !important;
 }
 
-.tarjeta-opcion h3 {
-    color: #1e293b;
-    font-size: 1.3rem;
-    margin: 0;
+#input-pin {
+    background-color: var(--bg-input) !important;
+    border: 1px solid var(--accent-purple) !important;
+    border-radius: 16px !important;
+    color: #ffffff !important;
+}
+
+#btn-desbloquear-pin {
+    background: var(--accent-gradient) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 6px 18px rgba(124, 58, 237, 0.35);
 }
