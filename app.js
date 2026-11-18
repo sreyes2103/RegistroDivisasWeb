@@ -271,7 +271,7 @@ if(listaRegistros) {
 
 
 // =========================================================
-// MÓDULO DE PRÉSTAMOS (CON ABONOS Y CHECK DE INTERÉS)
+// MÓDULO DE PRÉSTAMOS (CON ABONOS, CHECK DE INTERÉS Y EDICIÓN)
 // =========================================================
 const checkInteres = document.getElementById('check-interes');
 const cajaPorcentaje = document.getElementById('caja-porcentaje');
@@ -385,6 +385,7 @@ onSnapshot(collection(db, "prestamos"), (querySnapshot) => {
         let totalCapitalGlobal = 0;
         let historialActivos = 0;
         let detallesHTML = '';
+        let totalPrestamosCliente = dato.historial ? dato.historial.length : 0;
 
         if (dato.historial && dato.historial.length > 0) {
             dato.historial.forEach((item, i) => {
@@ -406,18 +407,24 @@ onSnapshot(collection(db, "prestamos"), (querySnapshot) => {
                 const notaExtra = item.nota ? `<p style="margin:8px 0 0 0; font-size: 0.85rem; color: #4b5563; background: #f3f4f6; padding: 6px; border-radius: 4px; border-left: 3px solid #3b82f6;"><strong>Nota:</strong> ${item.nota}</p>` : '';
                 
                 let botonesSub = '';
+                let btnEditarSub = `<button class="btn-editar-sub" data-id="${id}" data-index="${i}" style="background-color: #8b5cf6; color: white; border: none; border-radius: 4px; padding: 4px 10px; font-size: 0.8rem; cursor: pointer; font-weight:bold;">✏️ Editar</button>`;
+
                 if(saldo > 0) {
                     botonesSub = `
                         <div style="display: flex; gap: 6px; margin-top: 8px;">
                             <button class="btn-abono-sub" data-id="${id}" data-index="${i}" style="flex: 1; background-color: #3b82f6; color: white; border: none; border-radius: 4px; padding: 6px; font-size: 0.8rem; cursor: pointer; font-weight:bold;">💵 Abono</button>
                             <button class="btn-pagado-sub" data-id="${id}" data-index="${i}" style="flex: 1; background-color: #10b981; color: white; border: none; border-radius: 4px; padding: 6px; font-size: 0.8rem; cursor: pointer; font-weight:bold;">✅ Pagado</button>
+                            ${btnEditarSub}
                         </div>
                     `;
                 } else {
                     botonesSub = `
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
                             <p style="color: #10b981; font-weight: bold; font-size: 0.85rem; margin: 0;">✅ Préstamo liquidado</p>
-                            <button class="btn-borrar-sub" data-id="${id}" data-index="${i}" style="background-color: #ef4444; color: white; border: none; border-radius: 4px; padding: 4px 10px; font-size: 0.8rem; cursor: pointer; font-weight:bold;">🗑️ Borrar</button>
+                            <div style="display: flex; gap: 4px;">
+                                ${btnEditarSub}
+                                <button class="btn-borrar-sub" data-id="${id}" data-index="${i}" style="background-color: #ef4444; color: white; border: none; border-radius: 4px; padding: 4px 10px; font-size: 0.8rem; cursor: pointer; font-weight:bold;">🗑️ Borrar</button>
+                            </div>
                         </div>
                     `;
                 }
@@ -454,6 +461,12 @@ onSnapshot(collection(db, "prestamos"), (querySnapshot) => {
             btnAbonoGlobal = `<button class="btn-abono-global" data-id="${id}" style="flex: 1; background-color: #3b82f6; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">💵 Abono Global</button>`;
         }
 
+        // SOLO aparece el botón editar en la tarjeta principal si el cliente tiene UN SOLO préstamo
+        let btnEditarGlobal = '';
+        if (totalPrestamosCliente === 1) {
+            btnEditarGlobal = `<button class="btn-editar-global" data-id="${id}" style="flex: 1; background-color: #8b5cf6; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">✏️ Editar</button>`;
+        }
+
         let textoEstado = totalSaldoGlobal > 0 ? "Deuda activa" : "Pagado";
 
         listaPrestamosDOM.innerHTML += `
@@ -476,13 +489,13 @@ onSnapshot(collection(db, "prestamos"), (querySnapshot) => {
                 <div style="display: flex; gap: 8px; margin-top: 8px;">
                     ${btnAbonoGlobal}
                     ${btnPagadoGlobal}
+                    ${btnEditarGlobal}
                     <button class="btn-borrar-prestamo" data-id="${id}" style="flex: 1; background-color: #ef4444; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">🗑️ Borrar</button>
                 </div>
             </div>
         `;
     });
 
-    // Actualizar variable global y mostrar en pantalla según el estado del ojito
     montoDineroCalleGlobal = dineroEnCalle;
     if (totalDineroCalleDOM) {
         totalDineroCalleDOM.innerText = montoVisible ? dineroEnCalle.toFixed(2) : "••••••";
@@ -532,6 +545,80 @@ if (listaPrestamosDOM) {
                 divDetalles.style.display = 'none';
                 e.target.innerText = 'Ver Detalles 🔽';
             }
+        }
+
+        // --- FUNCIÓN UNIFICADA DE EDICIÓN DE PRÉSTAMO ---
+        const ejecutarEdicionPrestamo = async (docId, indexSub) => {
+            const docRef = doc(db, "prestamos", docId);
+            const docSnap = await getDoc(docRef);
+            if(!docSnap.exists()) return;
+            
+            let data = docSnap.data();
+            let item = data.historial[indexSub];
+            if(item.saldoPendiente === undefined) item.saldoPendiente = item.montoTotal;
+
+            let nuevoMontoStr = prompt("Modificar Capital Base (Monto del préstamo):", item.montoBase);
+            if(nuevoMontoStr === null) return;
+            let nuevoMonto = parseFloat(nuevoMontoStr);
+            if(isNaN(nuevoMonto) || nuevoMonto <= 0) {
+                alert("Monto inválido.");
+                return;
+            }
+
+            let nuevaFechaInicio = prompt("Modificar Fecha de Inicio:", item.fechaInicio);
+            if(nuevaFechaInicio === null) return;
+
+            let nuevaFechaFin = prompt("Modificar Fecha a Cancelar:", item.fechaFin);
+            if(nuevaFechaFin === null) return;
+
+            let nuevaNota = prompt("Modificar Nota / Observación:", item.nota || "");
+            if(nuevaNota === null) return;
+
+            // Mantener la proporción de interés original si la tuviera
+            let diferenciaOriginal = item.montoTotal - item.montoBase;
+            let porcentajeEstimado = item.montoBase > 0 ? (diferenciaOriginal / item.montoBase) : 0;
+            let nuevoMontoTotal = nuevoMonto + (nuevoMonto * porcentajeEstimado);
+
+            // Restar los abonos ya realizados para actualizar el saldo pendiente real
+            let totalAbonado = 0;
+            if(item.abonos) {
+                item.abonos.forEach(ab => totalAbonado += ab.monto);
+            }
+
+            let nuevoSaldoPendiente = nuevoMontoTotal - totalAbonado;
+            if(nuevoSaldoPendiente < 0) nuevoSaldoPendiente = 0;
+
+            item.montoBase = nuevoMonto;
+            item.montoTotal = nuevoMontoTotal;
+            item.saldoPendiente = nuevoSaldoPendiente;
+            item.fechaInicio = nuevaFechaInicio;
+            item.fechaFin = nuevaFechaFin;
+            item.nota = nuevaNota;
+
+            if(nuevoSaldoPendiente === 0) {
+                item.estado = "Pagado";
+            } else if(item.estado === "Pagado" && nuevoSaldoPendiente > 0) {
+                item.estado = "Deuda activa";
+            }
+
+            let todosPagados = data.historial.every(h => {
+                let s = h.saldoPendiente !== undefined ? h.saldoPendiente : h.montoTotal;
+                return s === 0;
+            });
+
+            await updateDoc(docRef, {
+                historial: data.historial,
+                estado: todosPagados ? "Pagado" : "Deuda activa"
+            });
+            alert("¡Préstamo actualizado correctamente!");
+        };
+
+        if (e.target.classList.contains('btn-editar-global')) {
+            await ejecutarEdicionPrestamo(e.target.getAttribute('data-id'), 0);
+        }
+
+        if (e.target.classList.contains('btn-editar-sub')) {
+            await ejecutarEdicionPrestamo(e.target.getAttribute('data-id'), parseInt(e.target.getAttribute('data-index')));
         }
 
         const procesarPago = async (docId, indexSub, montoAbono, esAbono = true, esGlobal = false) => {
@@ -596,7 +683,7 @@ if (listaPrestamosDOM) {
         };
 
         if (e.target.classList.contains('btn-abono-global')) {
-            let abono = prompt("Ingresa el monto a abonar a la deuda general:");
+            let abono = prompt("Ingresa el monto a abonar al total de la deuda:");
             if(abono !== null && parseFloat(abono) > 0) {
                 await procesarPago(e.target.getAttribute('data-id'), null, parseFloat(abono), true, true);
             }
