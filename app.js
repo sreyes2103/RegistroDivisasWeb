@@ -31,18 +31,24 @@ const btnVolverPrestamo = document.getElementById('btn-volver-prestamo');
 const btnVolverClientes = document.getElementById('btn-volver-clientes');
 const estadoSelect = document.getElementById('estado');
 
-// --- ELEMENTOS DE SEGURIDAD ---
+// --- ELEMENTOS DE SEGURIDAD (PIN FIJO: 2103) ---
 const modalBloqueo = document.getElementById('modal-bloqueo');
 const mensajeBloqueo = document.getElementById('mensaje-bloqueo');
 const inputPin = document.getElementById('input-pin');
 const btnDesbloquearPin = document.getElementById('btn-desbloquear-pin');
-const btnReintentarBio = document.getElementById('btn-reintentar-bio');
-const btnUsarPin = document.getElementById('btn-usar-pin');
-const cajaModoPin = document.getElementById('caja-modo-pin');
 const btnCancelarBloqueo = document.getElementById('btn-cancelar-bloqueo');
 const tituloModalSeguridad = document.getElementById('titulo-modal-seguridad');
 
+// Ocultar botones de biometría obsoletos si existen en el HTML
+const btnReintentarBio = document.getElementById('btn-reintentar-bio');
+const btnUsarPin = document.getElementById('btn-usar-pin');
+if(btnReintentarBio) btnReintentarBio.style.display = 'none';
+if(btnUsarPin) btnUsarPin.style.display = 'none';
+
 let destinoAccion = null;
+
+// PIN ÚNICO ESTABLECIDO
+const PIN_MAESTRO = "2103";
 
 // --- EVENTOS DE MENÚ PRINCIPAL ---
 if(btnCompra) {
@@ -93,51 +99,18 @@ if(btnVolverClientes) {
     };
 }
 
-// --- LÓGICA DE SEGURIDAD BLINDADA ---
+// --- LÓGICA DE SEGURIDAD POR PIN FIJO ---
 function abrirSeguridad(nombreSeccion, callbackExito) {
     destinoAccion = callbackExito;
     if(tituloModalSeguridad) tituloModalSeguridad.innerText = `Acceso a ${nombreSeccion}`;
     if(modalBloqueo) modalBloqueo.style.display = 'flex';
     
-    let pinGuardado = localStorage.getItem('refri_pharma_pin');
-
-    if (!pinGuardado) {
-        if(mensajeBloqueo) mensajeBloqueo.innerText = "Configura un PIN numérico de respaldo (4 dígitos):";
-        if(cajaModoPin) cajaModoPin.style.display = 'block';
-        if(btnUsarPin) btnUsarPin.style.display = 'none';
-        if(btnReintentarBio) btnReintentarBio.style.display = 'none';
-        if(btnDesbloquearPin) btnDesbloquearPin.innerText = "Guardar PIN y Acceder";
-        if(inputPin) { inputPin.value = ''; inputPin.focus(); }
-    } else {
-        // Mostramos directamente el campo de PIN y el botón de FaceID/Huella para evitar bloqueos de entorno
-        if(mensajeBloqueo) mensajeBloqueo.innerText = "Ingresa tu PIN o usa biometría:";
-        if(cajaModoPin) cajaModoPin.style.display = 'block';
-        if(btnUsarPin) btnUsarPin.style.display = 'none';
-        if(btnReintentarBio) btnReintentarBio.style.display = 'block';
-        if(btnDesbloquearPin) btnDesbloquearPin.innerText = "Desbloquear";
-        if(inputPin) { inputPin.value = ''; inputPin.focus(); }
-        
-        // Intentar disparar biometría en segundo plano sin bloquear la interfaz
-        dispararBiometriaSilenciosa();
-    }
-}
-
-async function dispararBiometriaSilenciosa() {
-    if (!window.PublicKeyCredential || window.location.protocol !== 'https:') return;
-    try {
-        const challenge = new Uint8Array(32);
-        window.crypto.getRandomValues(challenge);
-        
-        const assertion = await navigator.credentials.get({
-            publicKey: { 
-                challenge: challenge, 
-                userVerification: "required",
-                timeout: 15000 
-            }
-        });
-        if (assertion) concederAcceso();
-    } catch (error) {
-        console.log("Biometria manual requerida o cancelada.");
+    if(mensajeBloqueo) mensajeBloqueo.innerText = "Ingresa tu PIN de seguridad de 4 dígitos:";
+    if(btnDesbloquearPin) btnDesbloquearPin.innerText = "Desbloquear";
+    
+    if(inputPin) { 
+        inputPin.value = ''; 
+        inputPin.focus(); 
     }
 }
 
@@ -150,13 +123,6 @@ function concederAcceso() {
     }
 }
 
-if (btnReintentarBio) {
-    btnReintentarBio.onclick = async () => {
-        if(mensajeBloqueo) mensajeBloqueo.innerText = "Escaneando biometría...";
-        await dispararBiometriaSilenciosa();
-    };
-}
-
 if (btnCancelarBloqueo) {
     btnCancelarBloqueo.onclick = () => {
         destinoAccion = null; 
@@ -166,7 +132,6 @@ if (btnCancelarBloqueo) {
 
 if (btnDesbloquearPin) {
     btnDesbloquearPin.onclick = () => {
-        let pinGuardado = localStorage.getItem('refri_pharma_pin');
         const valor = inputPin ? inputPin.value.trim() : '';
 
         if (valor.length !== 4 || isNaN(valor)) {
@@ -174,17 +139,11 @@ if (btnDesbloquearPin) {
             return;
         }
 
-        if (!pinGuardado) {
-            localStorage.setItem('refri_pharma_pin', valor);
-            alert("✅ PIN configurado con éxito.");
+        if (valor === PIN_MAESTRO) {
             concederAcceso();
         } else {
-            if (valor === pinGuardado) {
-                concederAcceso();
-            } else {
-                alert("❌ PIN incorrecto.");
-                if(inputPin) inputPin.value = '';
-            }
+            alert("❌ PIN incorrecto.");
+            if(inputPin) inputPin.value = '';
         }
     };
 }
