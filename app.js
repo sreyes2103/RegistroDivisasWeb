@@ -474,9 +474,30 @@ onSnapshot(collection(db, "prestamos"), (querySnapshot) => {
             </div>
         `;
     });
-    if (totalDineroCalleDOM) totalDineroCalleDOM.innerText = dineroEnCalle.toFixed(2);
-});
 
+    // Variable para almacenar el último valor calculado y manejar la visibilidad
+let montoDineroCalleGlobal = 0;
+let montoVisible = true;
+
+const totalDineroCalleDOM = document.getElementById('total-dinero-calle');
+const btnToggleVisibilidad = document.getElementById('btn-toggle-visibilidad');
+
+// Lógica dentro del onSnapshot de préstamos donde se calcula el total:
+if (totalDineroCalleDOM) {
+    montoDineroCalleGlobal = dineroEnCalle;
+    totalDineroCalleDOM.innerText = montoVisible ? dineroEnCalle.toFixed(2) : "••••••";
+}
+
+// Evento para el botón del ojito
+if (btnToggleVisibilidad) {
+    btnToggleVisibilidad.onclick = () => {
+        montoVisible = !montoVisible;
+        if (totalDineroCalleDOM) {
+            totalDineroCalleDOM.innerText = montoVisible ? montoDineroCalleGlobal.toFixed(2) : "••••••";
+        }
+        btnToggleVisibilidad.innerText = montoVisible ? "👁️" : "🙈";
+    };
+}
 if (listaPrestamosDOM) {
     listaPrestamosDOM.addEventListener('click', async (e) => {
         if (e.target.classList.contains('btn-borrar-prestamo')) {
