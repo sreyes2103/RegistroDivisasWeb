@@ -3,29 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Refri Pharma - Gestión</title>
+    <title>Reyes Exchange - Gestión Financiera</title>
     <!-- Vinculamos la fuente Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- PANTALLA DE SELECCIÓN / MENÚ PRINCIPAL ESTILO FINTECH -->
+    <!-- PANTALLA DE SELECCIÓN / MENÚ PRINCIPAL REYES EXCHANGE -->
     <div id="pantalla-seleccion">
         <div>
-            <div class="header-fintech">
-                <div class="logo-badge">❄️</div>
-                <h1>Refri Pharma</h1>
-                <p>Control Financiero y Gestión</p>
+            <div class="header-fintech" style="padding-top: 10px;">
+                <!-- IMAGOTIPO OFICIAL REYES EXCHANGE -->
+                <div style="max-width: 220px; margin: 0 auto 16px auto;">
+                    <img src="imagotipo.jpg" alt="Reyes Exchange Logo" style="width: 100%; height: auto; border-radius: 16px; box-shadow: 0 8px 25px rgba(139, 92, 246, 0.25);">
+                </div>
             </div>
 
             <!-- Tarjeta Hero estilo Billetera -->
             <div class="hero-card-fintech">
                 <div class="hero-label">Panel Administrativo</div>
-                <div class="hero-title">Operaciones & Capital</div>
+                <div class="hero-title">Divisas • Zelle • Cash Advance</div>
                 <div class="hero-pills">
                     <span class="hero-pill">🔒 PIN Activo</span>
-                    <span class="hero-pill">☁️ Nube Sincronizada</span>
+                    <span class="hero-pill">☁️ Sincronizado</span>
                 </div>
             </div>
 
@@ -36,8 +37,8 @@
                     <div class="btn-menu-left">
                         <div class="icon-box icon-compra">💵</div>
                         <div class="btn-menu-text">
-                            <h3>Compras y Divisas</h3>
-                            <p>Efectivo y retiros pendientes</p>
+                            <h3>Divisas y Efectivo</h3>
+                            <p>Registros de efectivo y retiros</p>
                         </div>
                     </div>
                     <div class="arrow-circle">➔</div>
@@ -47,7 +48,7 @@
                     <div class="btn-menu-left">
                         <div class="icon-box icon-prestamo">🤝</div>
                         <div class="btn-menu-text">
-                            <h3>Préstamos</h3>
+                            <h3>Préstamos y Cash Advance</h3>
                             <p>Capital, intereses y abonos</p>
                         </div>
                     </div>
@@ -68,7 +69,7 @@
         </div>
 
         <p style="text-align: center; color: #64748b; font-size: 0.78rem; margin-top: 30px;">
-            Refri Pharma PWA • Coro
+            Reyes Exchange PWA • Coro
         </p>
     </div>
 
@@ -77,7 +78,7 @@
     <div id="app-principal" style="display: none;">
         <div class="top-bar-interna">
             <button id="btn-volver">⬅ Volver</button>
-            <h2>Compras y Divisas</h2>
+            <h2>Divisas y Efectivo</h2>
         </div>
 
         <form id="formulario">
@@ -121,7 +122,7 @@
     <div id="app-prestamo" style="display: none;">
         <div class="top-bar-interna">
             <button id="btn-volver-prestamo">⬅ Volver</button>
-            <h2>Gestión de Préstamos</h2>
+            <h2>Préstamos y Cash Advance</h2>
         </div>
 
         <form id="formulario-prestamo">
@@ -164,7 +165,7 @@
             <input type="text" id="ubicacion-prestamo" placeholder="Pega el link de Maps o la zona" required>
 
             <label>Nota / Observación (Opcional):</label>
-            <textarea id="nota-prestamo" placeholder="Ej. Dejó una herramienta en garantía..." rows="2" style="width: 100%; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 12px; color: #fff;"></textarea>
+            <textarea id="nota-prestamo" placeholder="Ej. Zelle recibido / garantía..." rows="2" style="width: 100%; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 12px; color: #fff;"></textarea>
 
             <button type="submit">Guardar Préstamo</button>
         </form>
