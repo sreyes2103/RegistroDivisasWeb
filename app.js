@@ -171,7 +171,8 @@ if (inputPin) {
     };
 }
 
-async function registrarBiometria() {
+// Registro biométrico local (Solo huella/Face ID del teléfono)
+const ejecutarBiometriaRegistro = async () => {
     try {
         const challenge = new Uint8Array(32);
         window.crypto.getRandomValues(challenge);
@@ -180,23 +181,32 @@ async function registrarBiometria() {
                 challenge: challenge,
                 rp: { name: "Refri Pharma" },
                 user: { id: new Uint8Array(16), name: "admin", displayName: "Admin" },
-                pubKeyCredParams: [{ type: "public-key", alg: -7 }]
+                pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+                authenticatorSelection: { 
+                    authenticatorAttachment: "platform", // <--- FUERZA A USAR EL SENSOR LOCAL DEL TELÉFONO
+                    userVerification: "required" 
+                },
+                timeout: 60000
             }
         });
         localStorage.setItem('refri_pharma_bio', 'true');
-        alert("✅ ¡Biometría vinculada con éxito!");
+        alert("✅ ¡Huella o Face ID vinculado localmente con éxito!");
     } catch (e) {
-        console.log("Registro biométrico omitido");
+        console.log("Registro biométrico omitido o cancelado", e);
     }
-}
+};
 
+// Validación biométrica local
 if (btnBiometria) {
     btnBiometria.onclick = async () => {
         try {
             const challenge = new Uint8Array(32);
             window.crypto.getRandomValues(challenge);
             await navigator.credentials.get({
-                publicKey: { challenge: challenge, userVerification: "required" }
+                publicKey: { 
+                    challenge: challenge, 
+                    userVerification: "required" 
+                }
             });
             modalBloqueo.style.display = 'none';
             if (destinoAccion) {
