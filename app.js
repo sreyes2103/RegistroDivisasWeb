@@ -544,4 +544,26 @@ if (listaPrestamosDOM) {
         if (e.target.classList.contains('btn-borrar-sub')) {
             if (confirm("¿Estás seguro de que deseas eliminar este préstamo específico del historial?")) {
                 const docRef = doc(db, "prestamos", e.target.getAttribute('data-id'));
-                const indexSub = parseInt(e.target.getAttribute('
+                const indexSub = parseInt(e.target.getAttribute('data-index'));
+                
+                const docSnap = await getDoc(docRef);
+                if(docSnap.exists()){
+                    let data = docSnap.data();
+                    data.historial.splice(indexSub, 1);
+                    
+                    if(data.historial.length === 0) {
+                        await deleteDoc(docRef);
+                    } else {
+                        let todosPagados = data.historial.every(h => {
+                            let saldo = h.saldoPendiente !== undefined ? h.saldoPendiente : h.montoTotal;
+                            return saldo === 0;
+                        });
+                        await updateDoc(docRef, { 
+                            historial: data.historial, 
+                            estado: todosPagados ? "Pagado" : "Deuda activa" 
+                        });
+                    }
+                }
+            }
+        }
+        
