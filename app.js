@@ -271,7 +271,7 @@ if(listaRegistros) {
 
 
 // =========================================================
-// MÓDULO DE PRÉSTAMOS (CON ABONOS, CHECK DE INTERÉS Y EDICIÓN)
+// MÓDULO DE PRÉSTAMOS
 // =========================================================
 const checkInteres = document.getElementById('check-interes');
 const cajaPorcentaje = document.getElementById('caja-porcentaje');
@@ -407,23 +407,25 @@ onSnapshot(collection(db, "prestamos"), (querySnapshot) => {
                 const notaExtra = item.nota ? `<p style="margin:8px 0 0 0; font-size: 0.85rem; color: #4b5563; background: #f3f4f6; padding: 6px; border-radius: 4px; border-left: 3px solid #3b82f6;"><strong>Nota:</strong> ${item.nota}</p>` : '';
                 
                 let botonesSub = '';
-                let btnEditarSub = `<button class="btn-editar-sub" data-id="${id}" data-index="${i}" style="background-color: #8b5cf6; color: white; border: none; border-radius: 4px; padding: 4px 10px; font-size: 0.8rem; cursor: pointer; font-weight:bold;">✏️ Editar</button>`;
+                let btnEditarSub = `<button class="btn-editar-sub" data-id="${id}" data-index="${i}" style="background-color: #8b5cf6; color: white; border: none; border-radius: 6px; padding: 8px; font-size: 0.9rem; cursor: pointer; font-weight:bold; flex: 1;">✏️ Editar</button>`;
+                let btnAbonoSub = `<button class="btn-abono-sub" data-id="${id}" data-index="${i}" style="flex: 1; background-color: #3b82f6; color: white; border: none; border-radius: 6px; padding: 8px; font-size: 0.9rem; cursor: pointer; font-weight:bold;">💵 Abono</button>`;
+                let btnPagadoSub = `<button class="btn-pagado-sub" data-id="${id}" data-index="${i}" style="flex: 1; background-color: #10b981; color: white; border: none; border-radius: 6px; padding: 8px; font-size: 0.9rem; cursor: pointer; font-weight:bold;">✅ Pagado</button>`;
 
                 if(saldo > 0) {
                     botonesSub = `
-                        <div style="display: flex; gap: 6px; margin-top: 8px;">
-                            <button class="btn-abono-sub" data-id="${id}" data-index="${i}" style="flex: 1; background-color: #3b82f6; color: white; border: none; border-radius: 4px; padding: 6px; font-size: 0.8rem; cursor: pointer; font-weight:bold;">💵 Abono</button>
-                            <button class="btn-pagado-sub" data-id="${id}" data-index="${i}" style="flex: 1; background-color: #10b981; color: white; border: none; border-radius: 4px; padding: 6px; font-size: 0.8rem; cursor: pointer; font-weight:bold;">✅ Pagado</button>
+                        <div style="display: flex; gap: 6px; margin-top: 10px;">
+                            ${btnAbonoSub}
+                            ${btnPagadoSub}
                             ${btnEditarSub}
                         </div>
                     `;
                 } else {
                     botonesSub = `
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
                             <p style="color: #10b981; font-weight: bold; font-size: 0.85rem; margin: 0;">✅ Préstamo liquidado</p>
-                            <div style="display: flex; gap: 4px;">
+                            <div style="display: flex; gap: 6px;">
                                 ${btnEditarSub}
-                                <button class="btn-borrar-sub" data-id="${id}" data-index="${i}" style="background-color: #ef4444; color: white; border: none; border-radius: 4px; padding: 4px 10px; font-size: 0.8rem; cursor: pointer; font-weight:bold;">🗑️ Borrar</button>
+                                <button class="btn-borrar-sub" data-id="${id}" data-index="${i}" style="background-color: #ef4444; color: white; border: none; border-radius: 6px; padding: 6px 10px; font-size: 0.85rem; cursor: pointer; font-weight:bold;">🗑️ Borrar</button>
                             </div>
                         </div>
                     `;
@@ -451,49 +453,75 @@ onSnapshot(collection(db, "prestamos"), (querySnapshot) => {
         const enlaceWa = `https://wa.me/58${numLimpio}`;
         const enlaceMapa = dato.ubicacion.startsWith('http') ? dato.ubicacion : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dato.ubicacion)}`;
 
-        let btnPagadoGlobal = '';
-        if (historialActivos === 1 && totalSaldoGlobal > 0) {
-            btnPagadoGlobal = `<button class="btn-pagar-global" data-id="${id}" style="flex: 1; background-color: #10b981; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">✅ Pagado</button>`;
-        }
-        
-        let btnAbonoGlobal = '';
-        if (totalSaldoGlobal > 0) {
-            btnAbonoGlobal = `<button class="btn-abono-global" data-id="${id}" style="flex: 1; background-color: #3b82f6; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">💵 Abono Global</button>`;
-        }
-
-        // SOLO aparece el botón editar en la tarjeta principal si el cliente tiene UN SOLO préstamo
-        let btnEditarGlobal = '';
-        if (totalPrestamosCliente === 1) {
-            btnEditarGlobal = `<button class="btn-editar-global" data-id="${id}" style="flex: 1; background-color: #8b5cf6; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">✏️ Editar</button>`;
-        }
-
         let textoEstado = totalSaldoGlobal > 0 ? "Deuda activa" : "Pagado";
 
-        listaPrestamosDOM.innerHTML += `
-            <div class="tarjeta-registro" style="border-left: 4px solid #f59e0b;">
-                <h3>${dato.contacto}</h3>
-                <p style="font-size:1.1rem; margin-bottom:5px;"><strong>Total Deuda Pendiente: <span style="color:#b91c1c;">$${totalSaldoGlobal.toFixed(2)}</span></strong></p>
-                <p><strong>Estado:</strong> ${textoEstado} | <strong>Capital Invertido:</strong> $${totalCapitalGlobal.toFixed(2)}</p>
-                <p style="font-size: 0.85rem; color: #64748b; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><strong>Ubi:</strong> ${dato.ubicacion}</p>
-                
-                <button class="btn-ver-detalles" data-target="detalles-${id}" style="width: 100%; background-color: #e2e8f0; color: #334155; border: none; border-radius: 6px; padding: 8px; font-size: 0.9rem; cursor: pointer; margin-top: 10px; font-weight: bold;">Ver Detalles 🔽</button>
-                
-                <div id="detalles-${id}" style="display: none; margin-top: 10px; background-color: #f1f5f9; padding: 10px; border-radius: 6px;">
-                    ${detallesHTML}
+        // SI TIENE 1 SOLO PRÉSTAMO: Mostramos el detalle completo directo en la tarjeta principal (Sin botón "Ver Detalles")
+        if (totalPrestamosCliente === 1) {
+            let itemUnico = dato.historial[0];
+            let saldoUnico = itemUnico.saldoPendiente;
+            let abonosUnico = itemUnico.abonos || [];
+            let abonosVisualUnico = '';
+            
+            if(abonosUnico.length > 0) {
+                abonosVisualUnico = `<ul style="margin:5px 0 5px 15px; padding:0; font-size:0.8rem; color:#16a34a; list-style-type:circle;">`;
+                abonosUnico.forEach(ab => { abonosVisualUnico += `<li>Abono: $${ab.monto.toFixed(2)} (${ab.fecha})</li>`; });
+                abonosVisualUnico += `</ul>`;
+            }
+
+            let notaExtraUnica = itemUnico.nota ? `<p style="margin:8px 0 0 0; font-size: 0.85rem; color: #4b5563; background: #f3f4f6; padding: 6px; border-radius: 4px; border-left: 3px solid #3b82f6;"><strong>Nota:</strong> ${itemUnico.nota}</p>` : '';
+
+            listaPrestamosDOM.innerHTML += `
+                <div class="tarjeta-registro" style="border-left: 4px solid #f59e0b;">
+                    <h3>${dato.contacto}</h3>
+                    <p style="margin:2px 0;"><strong>Fecha:</strong> ${itemUnico.fechaInicio} | <span style="color: #b91c1c;"><strong>A Cancelar:</strong> ${itemUnico.fechaFin}</span></p>
+                    <p style="margin:2px 0;"><strong>Capital Original:</strong> $${itemUnico.montoBase.toFixed(2)} | <strong>Deuda Original:</strong> $${itemUnico.montoTotal.toFixed(2)}</p>
+                    <p style="font-size:1.05rem; margin:5px 0;"><strong>Saldo Pendiente: <span style="color:#b91c1c;">$${saldoUnico.toFixed(2)}</span></strong></p>
+                    ${abonosVisualUnico}
+                    ${notaExtraUnica}
+                    <p style="font-size: 0.85rem; color: #64748b; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><strong>Ubi:</strong> ${dato.ubicacion}</p>
+                    
+                    <div style="display: flex; gap: 8px; margin-top: 15px;">
+                        <a href="${enlaceWa}" target="_blank" style="flex: 1; background-color: #25D366; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">📲 WhatsApp</a>
+                        <a href="${enlaceMapa}" target="_blank" style="flex: 1; background-color: #f59e0b; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">📍 Mapa</a>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button class="btn-abono-sub" data-id="${id}" data-index="0" style="flex: 1; background-color: #3b82f6; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">💵 Abono</button>
+                        <button class="btn-pagado-sub" data-id="${id}" data-index="0" style="flex: 1; background-color: #10b981; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">✅ Pagado</button>
+                        <button class="btn-editar-sub" data-id="${id}" data-index="0" style="flex: 1; background-color: #8b5cf6; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">✏️ Editar</button>
+                        <button class="btn-borrar-prestamo" data-id="${id}" style="background-color: #ef4444; color: white; border: none; border-radius: 6px; padding: 8px 12px; cursor: pointer; font-weight:bold;">🗑️</button>
+                    </div>
                 </div>
-                
-                <div style="display: flex; gap: 8px; margin-top: 15px;">
-                    <a href="${enlaceWa}" target="_blank" style="flex: 1; background-color: #25D366; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">📲 WhatsApp</a>
-                    <a href="${enlaceMapa}" target="_blank" style="flex: 1; background-color: #f59e0b; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">📍 Mapa</a>
+            `;
+        } else {
+            // SI TIENE VARIOS PRÉSTAMOS: Muestra el resumen y el botón para expandir detalles
+            let btnPagadoGlobal = historialActivos === 1 && totalSaldoGlobal > 0 ? `<button class="btn-pagar-global" data-id="${id}" style="flex: 1; background-color: #10b981; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">✅ Pagado</button>` : '';
+            let btnAbonoGlobal = totalSaldoGlobal > 0 ? `<button class="btn-abono-global" data-id="${id}" style="flex: 1; background-color: #3b82f6; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">💵 Abono Global</button>` : '';
+
+            listaPrestamosDOM.innerHTML += `
+                <div class="tarjeta-registro" style="border-left: 4px solid #f59e0b;">
+                    <h3>${dato.contacto}</h3>
+                    <p style="font-size:1.1rem; margin-bottom:5px;"><strong>Total Deuda Pendiente: <span style="color:#b91c1c;">$${totalSaldoGlobal.toFixed(2)}</span></strong></p>
+                    <p><strong>Estado:</strong> ${textoEstado} | <strong>Capital Invertido:</strong> $${totalCapitalGlobal.toFixed(2)}</p>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><strong>Ubi:</strong> ${dato.ubicacion}</p>
+                    
+                    <button class="btn-ver-detalles" data-target="detalles-${id}" style="width: 100%; background-color: #e2e8f0; color: #334155; border: none; border-radius: 6px; padding: 8px; font-size: 0.9rem; cursor: pointer; margin-top: 10px; font-weight: bold;">Ver los ${totalPrestamosCliente} Préstamos 🔽</button>
+                    
+                    <div id="detalles-${id}" style="display: none; margin-top: 10px; background-color: #f1f5f9; padding: 10px; border-radius: 6px;">
+                        ${detallesHTML}
+                    </div>
+                    
+                    <div style="display: flex; gap: 8px; margin-top: 15px;">
+                        <a href="${enlaceWa}" target="_blank" style="flex: 1; background-color: #25D366; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">📲 WhatsApp</a>
+                        <a href="${enlaceMapa}" target="_blank" style="flex: 1; background-color: #f59e0b; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">📍 Mapa</a>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        ${btnAbonoGlobal}
+                        ${btnPagadoGlobal}
+                        <button class="btn-borrar-prestamo" data-id="${id}" style="flex: 1; background-color: #ef4444; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">🗑️ Borrar Todo</button>
+                    </div>
                 </div>
-                <div style="display: flex; gap: 8px; margin-top: 8px;">
-                    ${btnAbonoGlobal}
-                    ${btnPagadoGlobal}
-                    ${btnEditarGlobal}
-                    <button class="btn-borrar-prestamo" data-id="${id}" style="flex: 1; background-color: #ef4444; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">🗑️ Borrar</button>
-                </div>
-            </div>
-        `;
+            `;
+        }
     });
 
     montoDineroCalleGlobal = dineroEnCalle;
@@ -540,14 +568,14 @@ if (listaPrestamosDOM) {
             const divDetalles = document.getElementById(e.target.getAttribute('data-target'));
             if (divDetalles.style.display === 'none') {
                 divDetalles.style.display = 'block';
-                e.target.innerText = 'Ocultar Detalles 🔼';
+                e.target.innerText = 'Ocultar Préstamos 🔼';
             } else {
                 divDetalles.style.display = 'none';
-                e.target.innerText = 'Ver Detalles 🔽';
+                e.target.innerText = 'Ver Préstamos 🔽';
             }
         }
 
-        // --- FUNCIÓN UNIFICADA DE EDICIÓN DE PRÉSTAMO ---
+        // --- FUNCIÓN DE EDICIÓN DE PRÉSTAMO ---
         const ejecutarEdicionPrestamo = async (docId, indexSub) => {
             const docRef = doc(db, "prestamos", docId);
             const docSnap = await getDoc(docRef);
@@ -574,12 +602,10 @@ if (listaPrestamosDOM) {
             let nuevaNota = prompt("Modificar Nota / Observación:", item.nota || "");
             if(nuevaNota === null) return;
 
-            // Mantener la proporción de interés original si la tuviera
             let diferenciaOriginal = item.montoTotal - item.montoBase;
             let porcentajeEstimado = item.montoBase > 0 ? (diferenciaOriginal / item.montoBase) : 0;
             let nuevoMontoTotal = nuevoMonto + (nuevoMonto * porcentajeEstimado);
 
-            // Restar los abonos ya realizados para actualizar el saldo pendiente real
             let totalAbonado = 0;
             if(item.abonos) {
                 item.abonos.forEach(ab => totalAbonado += ab.monto);
@@ -612,10 +638,6 @@ if (listaPrestamosDOM) {
             });
             alert("¡Préstamo actualizado correctamente!");
         };
-
-        if (e.target.classList.contains('btn-editar-global')) {
-            await ejecutarEdicionPrestamo(e.target.getAttribute('data-id'), 0);
-        }
 
         if (e.target.classList.contains('btn-editar-sub')) {
             await ejecutarEdicionPrestamo(e.target.getAttribute('data-id'), parseInt(e.target.getAttribute('data-index')));
