@@ -39,16 +39,24 @@ const btnDesbloquearPin = document.getElementById('btn-desbloquear-pin');
 const btnCancelarBloqueo = document.getElementById('btn-cancelar-bloqueo');
 const tituloModalSeguridad = document.getElementById('titulo-modal-seguridad');
 
-// Ocultar botones de biometría obsoletos si existen en el HTML
-const btnReintentarBio = document.getElementById('btn-reintentar-bio');
-const btnUsarPin = document.getElementById('btn-usar-pin');
-if(btnReintentarBio) btnReintentarBio.style.display = 'none';
-if(btnUsarPin) btnUsarPin.style.display = 'none';
-
 let destinoAccion = null;
-
-// PIN ÚNICO ESTABLECIDO
 const PIN_MAESTRO = "2103";
+
+// --- ESTADO DE VISIBILIDAD DE DINERO EN LA CALLE ---
+let montoDineroCalleGlobal = 0;
+let montoVisible = true;
+const totalDineroCalleDOM = document.getElementById('total-dinero-calle');
+const btnToggleVisibilidad = document.getElementById('btn-toggle-visibilidad');
+
+if (btnToggleVisibilidad) {
+    btnToggleVisibilidad.onclick = () => {
+        montoVisible = !montoVisible;
+        if (totalDineroCalleDOM) {
+            totalDineroCalleDOM.innerText = montoVisible ? montoDineroCalleGlobal.toFixed(2) : "••••••";
+        }
+        btnToggleVisibilidad.innerText = montoVisible ? "👁️" : "🙈";
+    };
+}
 
 // --- EVENTOS DE MENÚ PRINCIPAL ---
 if(btnCompra) {
@@ -363,7 +371,6 @@ if(formPrestamo) {
 }
 
 const listaPrestamosDOM = document.getElementById('lista-prestamos');
-const totalDineroCalleDOM = document.getElementById('total-dinero-calle');
 
 onSnapshot(collection(db, "prestamos"), (querySnapshot) => {
     if(!listaPrestamosDOM) return;
@@ -475,29 +482,13 @@ onSnapshot(collection(db, "prestamos"), (querySnapshot) => {
         `;
     });
 
-    // Variable para almacenar el último valor calculado y manejar la visibilidad
-let montoDineroCalleGlobal = 0;
-let montoVisible = true;
-
-const totalDineroCalleDOM = document.getElementById('total-dinero-calle');
-const btnToggleVisibilidad = document.getElementById('btn-toggle-visibilidad');
-
-// Lógica dentro del onSnapshot de préstamos donde se calcula el total:
-if (totalDineroCalleDOM) {
+    // Actualizar variable global y mostrar en pantalla según el estado del ojito
     montoDineroCalleGlobal = dineroEnCalle;
-    totalDineroCalleDOM.innerText = montoVisible ? dineroEnCalle.toFixed(2) : "••••••";
-}
+    if (totalDineroCalleDOM) {
+        totalDineroCalleDOM.innerText = montoVisible ? dineroEnCalle.toFixed(2) : "••••••";
+    }
+});
 
-// Evento para el botón del ojito
-if (btnToggleVisibilidad) {
-    btnToggleVisibilidad.onclick = () => {
-        montoVisible = !montoVisible;
-        if (totalDineroCalleDOM) {
-            totalDineroCalleDOM.innerText = montoVisible ? montoDineroCalleGlobal.toFixed(2) : "••••••";
-        }
-        btnToggleVisibilidad.innerText = montoVisible ? "👁️" : "🙈";
-    };
-}
 if (listaPrestamosDOM) {
     listaPrestamosDOM.addEventListener('click', async (e) => {
         if (e.target.classList.contains('btn-borrar-prestamo')) {
