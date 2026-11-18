@@ -93,7 +93,7 @@ if(btnVolverClientes) {
     };
 }
 
-// --- CONTROLADOR DE LA VENTANA DE SEGURIDAD (BIOMETRÍA PRIMERO) ---
+// --- CONTROLADOR DE LA VENTANA DE SEGURIDAD (CORREGIDO PARA IOS) ---
 const modalBloqueo = document.getElementById('modal-bloqueo');
 const mensajeBloqueo = document.getElementById('mensaje-bloqueo');
 const inputPin = document.getElementById('input-pin');
@@ -106,20 +106,17 @@ const tituloModalSeguridad = document.getElementById('titulo-modal-seguridad');
 
 let destinoAccion = null;
 
-// Función principal que abre el blindaje
 function abrirSeguridad(nombreSeccion, callbackExito) {
     destinoAccion = callbackExito;
     tituloModalSeguridad.innerText = `Acceso a ${nombreSeccion}`;
     modalBloqueo.style.display = 'flex';
     
-    // Ocultar PIN y mostrar lector por defecto
     cajaModoPin.style.display = 'none';
     btnUsarPin.style.display = 'block';
     
     let pinGuardado = localStorage.getItem('refri_pharma_pin');
 
     if (!pinGuardado) {
-        // Si no hay PIN creado aún, fuerza a crear uno por seguridad inicial
         mensajeBloqueo.innerText = "Configura un PIN numérico de respaldo (4 dígitos):";
         cajaModoPin.style.display = 'block';
         btnUsarPin.style.display = 'none';
@@ -127,17 +124,17 @@ function abrirSeguridad(nombreSeccion, callbackExito) {
         inputPin.value = '';
         inputPin.focus();
     } else {
-        // Si ya hay PIN, intentamos disparar la biometría de inmediato
-        mensajeBloqueo.innerText = "Escanea tu huella o Face ID...";
-        dispararBiometria();
+        mensajeBloqueo.innerText = "Toca el botón de huella o usa tu PIN";
+        // En iOS abrimos directamente el PIN o dejamos disponible el botón para evitar bloqueos de Webview
     }
 }
 
-// Ejecutor del sensor biométrico local del teléfono
+// Disparador Biométrico Seguro para iOS / Web
 async function dispararBiometria() {
-    if (!window.PublicKeyCredential) {
-        // Si el equipo no soporta biometria, mandamos al PIN directamente
-        cambiarAModoPin("Tu dispositivo no soporta biometría. Usa tu PIN:");
+    // Verificamos si el navegador soporta credenciales y estamos en HTTPS
+    if (!window.PublicKeyCredential || window.location.protocol !== 'https:') {
+        alert("La biometría requiere una conexión HTTPS segura. Por favor usa tu PIN.");
+        cambiarAModoPin("Ingresa tu PIN de seguridad:");
         return;
     }
 
@@ -145,7 +142,8 @@ async function dispararBiometria() {
         const challenge = new Uint8Array(32);
         window.crypto.getRandomValues(challenge);
         
-        await navigator.credentials.get({
+        // Intentamos autenticación local de plataforma
+        const credential = await navigator.credentials.get({
             publicKey: { 
                 challenge: challenge, 
                 userVerification: "required",
@@ -153,28 +151,28 @@ async function dispararBiometria() {
             }
         });
 
-        // ¡Biometría exitosa! Cerramos modal y damos acceso
-        modalBloqueo.style.display = 'none';
-        if (destinoAccion) {
-            let ejecutar = destinoAccion;
-            destinoAccion = null;
-            ejecutar();
+        if (credential) {
+            modalBloqueo.style.display = 'none';
+            if (destinoAccion) {
+                let ejecutar = destinoAccion;
+                destinoAccion = null;
+                ejecutar();
+            }
         }
     } catch (error) {
-        console.log("Biometría cancelada o fallida", error);
-        mensajeBloqueo.innerText = "No se Pudo verificar. Reintenta o usa tu PIN.";
+        console.log("Fallo o cancelación de biometría:", error);
+        // Si el usuario cancela o el navegador bloquea el prompt, lo pasamos amigablemente al PIN
+        mensajeBloqueo.innerText = "No se pudo usar Face ID. Ingresa tu PIN:";
+        cambiarAModoPin("Ingresa tu PIN de seguridad:");
     }
 }
 
-// Botón para reintentar huella manualmente
 if (btnReintentarBio) {
     btnReintentarBio.onclick = () => {
-        mensajeBloqueo.innerText = "Escanea tu huella o Face ID...";
         dispararBiometria();
     };
 }
 
-// Botón para cambiar manualmente a la vista de PIN
 if (btnUsarPin) {
     btnUsarPin.onclick = () => {
         cambiarAModoPin("Ingresa tu PIN numérico de 4 dígitos:");
@@ -190,7 +188,6 @@ function cambiarAModoPin(textoMensaje) {
     inputPin.focus();
 }
 
-// Botón Cancelar
 if (btnCancelarBloqueo) {
     btnCancelarBloqueo.onclick = () => {
         destinoAccion = null; 
@@ -198,7 +195,6 @@ if (btnCancelarBloqueo) {
     };
 }
 
-// Validación y Creación de PIN
 if (btnDesbloquearPin) {
     btnDesbloquearPin.onclick = async () => {
         let pinGuardado = localStorage.getItem('refri_pharma_pin');
@@ -210,7 +206,6 @@ if (btnDesbloquearPin) {
         }
 
         if (!pinGuardado) {
-            // Primer registro del PIN
             localStorage.setItem('refri_pharma_pin', valor);
             alert("✅ PIN de respaldo configurado con éxito.");
             modalBloqueo.style.display = 'none';
@@ -220,7 +215,6 @@ if (btnDesbloquearPin) {
                 ejecutar();
             }
         } else {
-            // Validación de PIN existente
             if (valor === pinGuardado) {
                 modalBloqueo.style.display = 'none';
                 if (destinoAccion) {
@@ -241,7 +235,6 @@ if (inputPin) {
         if (e.key === 'Enter') btnDesbloquearPin.click();
     };
 }
-
 // Registro biométrico local (Solo huella/Face ID del teléfono)
 const ejecutarBiometriaRegistro = async () => {
     try {
