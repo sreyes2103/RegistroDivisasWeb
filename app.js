@@ -16,7 +16,7 @@ const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
 });
 
-// --- SISTEMA DE NAVEGACIÓN Y SEGURIDAD BLINDADA ---
+// --- ELEMENTOS DE NAVEGACIÓN ---
 const pantallaSeleccion = document.getElementById('pantalla-seleccion');
 const appPrincipal = document.getElementById('app-principal'); 
 const appPrestamo = document.getElementById('app-prestamo');   
@@ -31,18 +31,20 @@ const btnVolverPrestamo = document.getElementById('btn-volver-prestamo');
 const btnVolverClientes = document.getElementById('btn-volver-clientes');
 const estadoSelect = document.getElementById('estado');
 
-// Modales y Elementos de Seguridad
+// --- ELEMENTOS DE SEGURIDAD ---
 const modalBloqueo = document.getElementById('modal-bloqueo');
 const mensajeBloqueo = document.getElementById('mensaje-bloqueo');
 const inputPin = document.getElementById('input-pin');
 const btnDesbloquearPin = document.getElementById('btn-desbloquear-pin');
-const btnBiometria = document.getElementById('btn-biometria');
+const btnReintentarBio = document.getElementById('btn-reintentar-bio');
+const btnUsarPin = document.getElementById('btn-usar-pin');
+const cajaModoPin = document.getElementById('caja-modo-pin');
 const btnCancelarBloqueo = document.getElementById('btn-cancelar-bloqueo');
 const tituloModalSeguridad = document.getElementById('titulo-modal-seguridad');
 
 let destinoAccion = null;
 
-// 1. Compra de Efectivo (Libre acceso)
+// --- EVENTOS DE MENÚ PRINCIPAL ---
 if(btnCompra) {
     btnCompra.onclick = () => {
         pantallaSeleccion.style.display = 'none';
@@ -51,7 +53,6 @@ if(btnCompra) {
     };
 }
 
-// 2. Préstamos (Protegido)
 if(btnPrestamo) {
     btnPrestamo.onclick = () => {
         abrirSeguridad("Sección de Préstamos", () => {
@@ -61,7 +62,6 @@ if(btnPrestamo) {
     };
 }
 
-// 3. Clientes (Protegido)
 if(btnClientes) {
     btnClientes.onclick = () => {
         abrirSeguridad("Directorio de Clientes", () => {
@@ -71,7 +71,7 @@ if(btnClientes) {
     };
 }
 
-// Botones de Retorno al Menú Principal
+// --- BOTONES VOLVER ---
 if(btnVolver) {
     btnVolver.onclick = () => {
         appPrincipal.style.display = 'none';
@@ -93,47 +93,32 @@ if(btnVolverClientes) {
     };
 }
 
-// --- CONTROLADOR DE LA VENTANA DE SEGURIDAD (CORREGIDO PARA IOS) ---
-const modalBloqueo = document.getElementById('modal-bloqueo');
-const mensajeBloqueo = document.getElementById('mensaje-bloqueo');
-const inputPin = document.getElementById('input-pin');
-const btnDesbloquearPin = document.getElementById('btn-desbloquear-pin');
-const btnReintentarBio = document.getElementById('btn-reintentar-bio');
-const btnUsarPin = document.getElementById('btn-usar-pin');
-const cajaModoPin = document.getElementById('caja-modo-pin');
-const btnCancelarBloqueo = document.getElementById('btn-cancelar-bloqueo');
-const tituloModalSeguridad = document.getElementById('titulo-modal-seguridad');
-
-let destinoAccion = null;
-
+// --- LÓGICA DE SEGURIDAD (BIOMETRÍA + PIN) ---
 function abrirSeguridad(nombreSeccion, callbackExito) {
     destinoAccion = callbackExito;
-    tituloModalSeguridad.innerText = `Acceso a ${nombreSeccion}`;
-    modalBloqueo.style.display = 'flex';
-    
-    cajaModoPin.style.display = 'none';
-    btnUsarPin.style.display = 'block';
+    if(tituloModalSeguridad) tituloModalSeguridad.innerText = `Acceso a ${nombreSeccion}`;
+    if(modalBloqueo) modalBloqueo.style.display = 'flex';
     
     let pinGuardado = localStorage.getItem('refri_pharma_pin');
 
     if (!pinGuardado) {
-        mensajeBloqueo.innerText = "Configura un PIN numérico de respaldo (4 dígitos):";
-        cajaModoPin.style.display = 'block';
-        btnUsarPin.style.display = 'none';
-        btnDesbloquearPin.innerText = "Guardar PIN y Acceder";
-        inputPin.value = '';
-        inputPin.focus();
+        if(mensajeBloqueo) mensajeBloqueo.innerText = "Configura un PIN numérico de respaldo (4 dígitos):";
+        if(cajaModoPin) cajaModoPin.style.display = 'block';
+        if(btnUsarPin) btnUsarPin.style.display = 'none';
+        if(btnReintentarBio) btnReintentarBio.style.display = 'none';
+        if(btnDesbloquearPin) btnDesbloquearPin.innerText = "Guardar PIN y Acceder";
+        if(inputPin) { inputPin.value = ''; inputPin.focus(); }
     } else {
-        mensajeBloqueo.innerText = "Toca el botón de huella o usa tu PIN";
-        // En iOS abrimos directamente el PIN o dejamos disponible el botón para evitar bloqueos de Webview
+        if(cajaModoPin) cajaModoPin.style.display = 'none';
+        if(btnUsarPin) btnUsarPin.style.display = 'block';
+        if(btnReintentarBio) btnReintentarBio.style.display = 'block';
+        if(mensajeBloqueo) mensajeBloqueo.innerText = "Verificando huella o Face ID...";
+        dispararBiometria();
     }
 }
 
-// Disparador Biométrico Seguro para iOS / Web
 async function dispararBiometria() {
-    // Verificamos si el navegador soporta credenciales y estamos en HTTPS
     if (!window.PublicKeyCredential || window.location.protocol !== 'https:') {
-        alert("La biometría requiere una conexión HTTPS segura. Por favor usa tu PIN.");
         cambiarAModoPin("Ingresa tu PIN de seguridad:");
         return;
     }
@@ -142,33 +127,62 @@ async function dispararBiometria() {
         const challenge = new Uint8Array(32);
         window.crypto.getRandomValues(challenge);
         
-        // Intentamos autenticación local de plataforma
-        const credential = await navigator.credentials.get({
-            publicKey: { 
-                challenge: challenge, 
-                userVerification: "required",
-                timeout: 30000 
+        // Si nunca se ha registrado credencial local, la registramos la primera vez
+        let credId = localStorage.getItem('refri_pharma_cred_id');
+        if (!credId) {
+            const cred = await navigator.credentials.create({
+                publicKey: {
+                    challenge: challenge,
+                    rp: { name: "Refri Pharma" },
+                    user: { id: new Uint8Array(16), name: "admin", displayName: "Admin" },
+                    pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+                    authenticatorSelection: { 
+                        authenticatorAttachment: "platform", 
+                        userVerification: "required" 
+                    },
+                    timeout: 30000
+                }
+            });
+            if (cred) {
+                localStorage.setItem('refri_pharma_cred_id', cred.id);
+                concederAcceso();
             }
-        });
-
-        if (credential) {
-            modalBloqueo.style.display = 'none';
-            if (destinoAccion) {
-                let ejecutar = destinoAccion;
-                destinoAccion = null;
-                ejecutar();
-            }
+        } else {
+            const assertion = await navigator.credentials.get({
+                publicKey: { 
+                    challenge: challenge, 
+                    userVerification: "required",
+                    timeout: 30000 
+                }
+            });
+            if (assertion) concederAcceso();
         }
     } catch (error) {
-        console.log("Fallo o cancelación de biometría:", error);
-        // Si el usuario cancela o el navegador bloquea el prompt, lo pasamos amigablemente al PIN
-        mensajeBloqueo.innerText = "No se pudo usar Face ID. Ingresa tu PIN:";
-        cambiarAModoPin("Ingresa tu PIN de seguridad:");
+        console.log("Biometría no completada:", error);
+        if(mensajeBloqueo) mensajeBloqueo.innerText = "No se pudo verificar. Reintenta o usa tu PIN.";
     }
+}
+
+function concederAcceso() {
+    if(modalBloqueo) modalBloqueo.style.display = 'none';
+    if (destinoAccion) {
+        let ejecutar = destinoAccion;
+        destinoAccion = null;
+        ejecutar();
+    }
+}
+
+function cambiarAModoPin(texto) {
+    if(mensajeBloqueo) mensajeBloqueo.innerText = texto;
+    if(cajaModoPin) cajaModoPin.style.display = 'block';
+    if(btnUsarPin) btnUsarPin.style.display = 'none';
+    if(btnDesbloquearPin) btnDesbloquearPin.innerText = "Desbloquear";
+    if(inputPin) { inputPin.value = ''; inputPin.focus(); }
 }
 
 if (btnReintentarBio) {
     btnReintentarBio.onclick = () => {
+        if(mensajeBloqueo) mensajeBloqueo.innerText = "Escanea tu huella o Face ID...";
         dispararBiometria();
     };
 }
@@ -179,24 +193,15 @@ if (btnUsarPin) {
     };
 }
 
-function cambiarAModoPin(textoMensaje) {
-    mensajeBloqueo.innerText = textoMensaje;
-    cajaModoPin.style.display = 'block';
-    btnUsarPin.style.display = 'none';
-    btnDesbloquearPin.innerText = "Desbloquear";
-    inputPin.value = '';
-    inputPin.focus();
-}
-
 if (btnCancelarBloqueo) {
     btnCancelarBloqueo.onclick = () => {
         destinoAccion = null; 
-        modalBloqueo.style.display = 'none';
+        if(modalBloqueo) modalBloqueo.style.display = 'none';
     };
 }
 
 if (btnDesbloquearPin) {
-    btnDesbloquearPin.onclick = async () => {
+    btnDesbloquearPin.onclick = () => {
         let pinGuardado = localStorage.getItem('refri_pharma_pin');
         const valor = inputPin.value.trim();
 
@@ -207,21 +212,11 @@ if (btnDesbloquearPin) {
 
         if (!pinGuardado) {
             localStorage.setItem('refri_pharma_pin', valor);
-            alert("✅ PIN de respaldo configurado con éxito.");
-            modalBloqueo.style.display = 'none';
-            if (destinoAccion) {
-                let ejecutar = destinoAccion;
-                destinoAccion = null;
-                ejecutar();
-            }
+            alert("✅ PIN configurado con éxito.");
+            concederAcceso();
         } else {
             if (valor === pinGuardado) {
-                modalBloqueo.style.display = 'none';
-                if (destinoAccion) {
-                    let ejecutar = destinoAccion;
-                    destinoAccion = null;
-                    ejecutar();
-                }
+                concederAcceso();
             } else {
                 alert("❌ PIN incorrecto.");
                 inputPin.value = '';
@@ -232,55 +227,7 @@ if (btnDesbloquearPin) {
 
 if (inputPin) {
     inputPin.onkeypress = (e) => {
-        if (e.key === 'Enter') btnDesbloquearPin.click();
-    };
-}
-// Registro biométrico local (Solo huella/Face ID del teléfono)
-const ejecutarBiometriaRegistro = async () => {
-    try {
-        const challenge = new Uint8Array(32);
-        window.crypto.getRandomValues(challenge);
-        await navigator.credentials.create({
-            publicKey: {
-                challenge: challenge,
-                rp: { name: "Refri Pharma" },
-                user: { id: new Uint8Array(16), name: "admin", displayName: "Admin" },
-                pubKeyCredParams: [{ type: "public-key", alg: -7 }],
-                authenticatorSelection: { 
-                    authenticatorAttachment: "platform", // <--- FUERZA A USAR EL SENSOR LOCAL DEL TELÉFONO
-                    userVerification: "required" 
-                },
-                timeout: 60000
-            }
-        });
-        localStorage.setItem('refri_pharma_bio', 'true');
-        alert("✅ ¡Huella o Face ID vinculado localmente con éxito!");
-    } catch (e) {
-        console.log("Registro biométrico omitido o cancelado", e);
-    }
-};
-
-// Validación biométrica local
-if (btnBiometria) {
-    btnBiometria.onclick = async () => {
-        try {
-            const challenge = new Uint8Array(32);
-            window.crypto.getRandomValues(challenge);
-            await navigator.credentials.get({
-                publicKey: { 
-                    challenge: challenge, 
-                    userVerification: "required" 
-                }
-            });
-            modalBloqueo.style.display = 'none';
-            if (destinoAccion) {
-                let ejecutar = destinoAccion;
-                destinoAccion = null;
-                ejecutar();
-            }
-        } catch (error) {
-            alert("No se pudo verificar la huella/Face ID. Usa tu PIN.");
-        }
+        if (e.key === 'Enter' && btnDesbloquearPin) btnDesbloquearPin.click();
     };
 }
 
@@ -395,500 +342,3 @@ if(listaRegistros) {
 // =========================================================
 // MÓDULO DE PRÉSTAMOS (CON ABONOS Y CHECK DE INTERÉS)
 // =========================================================
-const checkInteres = document.getElementById('check-interes');
-const cajaPorcentaje = document.getElementById('caja-porcentaje');
-const montoPrestamoInput = document.getElementById('monto-prestamo');
-const porcentajeInput = document.getElementById('porcentaje-interes');
-const displayTotalPrestamo = document.getElementById('display-total-prestamo');
-const formPrestamo = document.getElementById('formulario-prestamo');
-
-const calcularTotal = () => {
-    let montoBase = parseFloat(montoPrestamoInput ? montoPrestamoInput.value : 0) || 0;
-    if (checkInteres && checkInteres.checked) {
-        let porcentaje = parseFloat(porcentajeInput ? porcentajeInput.value : 0) || 0;
-        let total = montoBase + (montoBase * (porcentaje / 100));
-        if(displayTotalPrestamo) displayTotalPrestamo.innerText = `Monto a pagar: $${total.toFixed(2)}`;
-        return total;
-    } else {
-        if(displayTotalPrestamo) displayTotalPrestamo.innerText = `Monto a pagar: $${montoBase.toFixed(2)}`;
-        return montoBase;
-    }
-};
-
-if(checkInteres) {
-    checkInteres.addEventListener('change', (e) => {
-        if(cajaPorcentaje) cajaPorcentaje.style.display = e.target.checked ? 'block' : 'none';
-        if (!e.target.checked && porcentajeInput) porcentajeInput.value = '';
-        calcularTotal();
-    });
-}
-
-if(montoPrestamoInput) montoPrestamoInput.addEventListener('input', calcularTotal);
-if(porcentajeInput) porcentajeInput.addEventListener('input', calcularTotal);
-
-if(formPrestamo) {
-    formPrestamo.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const contacto = document.getElementById('contacto-prestamo').value.trim();
-        const telefono = document.getElementById('telefono-prestamo').value;
-        const montoBase = parseFloat(montoPrestamoInput.value);
-        const montoTotal = calcularTotal();
-        const estado = document.getElementById('estado-prestamo').value;
-        const fechaInicio = document.getElementById('fecha-prestamo').value;
-        const fechaFin = document.getElementById('fecha-cancelar').value;
-        const ubicacion = document.getElementById('ubicacion-prestamo').value;
-        const nota = document.getElementById('nota-prestamo').value.trim(); 
-
-        const nuevoDetalle = {
-            montoBase: montoBase,
-            montoTotal: montoTotal,
-            saldoPendiente: montoTotal,
-            fechaInicio: fechaInicio,
-            fechaFin: fechaFin,
-            nota: nota,
-            estado: estado,
-            abonos: []
-        };
-
-        try {
-            const q = query(collection(db, "prestamos"), where("contacto", "==", contacto));
-            const consulta = await getDocs(q);
-            let prestamoActivo = null;
-
-            consulta.forEach((doc) => {
-                if (doc.data().estado !== "Pagado") prestamoActivo = doc;
-            });
-
-            if (prestamoActivo) {
-                const dataActual = prestamoActivo.data();
-                const historialAnterior = dataActual.historial || [];
-                historialAnterior.push(nuevoDetalle);
-
-                await updateDoc(doc(db, "prestamos", prestamoActivo.id), {
-                    historial: historialAnterior,
-                    ubicacion: ubicacion
-                });
-                alert(`¡Préstamo sumado a la cuenta de ${contacto}!`);
-            } else {
-                await addDoc(collection(db, "prestamos"), {
-                    contacto: contacto,
-                    telefono: telefono,
-                    estado: estado,
-                    ubicacion: ubicacion,
-                    historial: [nuevoDetalle]
-                });
-                alert("¡Préstamo guardado exitosamente!");
-            }
-
-            if (!window.directorioClientes || !window.directorioClientes[contacto]) {
-                await addDoc(collection(db, "clientes"), { nombre: contacto, telefono: telefono, ubicacion: ubicacion });
-            }
-            formPrestamo.reset();
-            if(cajaPorcentaje) cajaPorcentaje.style.display = 'none';
-            calcularTotal();
-        } catch (error) {
-            console.error("Error al guardar préstamo:", error);
-        }
-    });
-}
-
-const listaPrestamosDOM = document.getElementById('lista-prestamos');
-const totalDineroCalleDOM = document.getElementById('total-dinero-calle');
-
-onSnapshot(collection(db, "prestamos"), (querySnapshot) => {
-    if(!listaPrestamosDOM) return;
-    listaPrestamosDOM.innerHTML = '';
-    let dineroEnCalle = 0;
-
-    querySnapshot.forEach((documento) => {
-        const dato = documento.data();
-        const id = documento.id;
-        
-        let totalSaldoGlobal = 0;
-        let totalCapitalGlobal = 0;
-        let historialActivos = 0;
-        let detallesHTML = '';
-
-        if (dato.historial && dato.historial.length > 0) {
-            dato.historial.forEach((item, i) => {
-                if (item.saldoPendiente === undefined) item.saldoPendiente = item.montoTotal;
-                let saldo = item.saldoPendiente;
-                let abonos = item.abonos || [];
-
-                totalSaldoGlobal += saldo;
-                totalCapitalGlobal += item.montoBase;
-                if(saldo > 0) historialActivos++;
-
-                let abonosVisual = '';
-                if(abonos.length > 0) {
-                    abonosVisual = `<ul style="margin:5px 0 5px 15px; padding:0; font-size:0.8rem; color:#16a34a; list-style-type:circle;">`;
-                    abonos.forEach(ab => { abonosVisual += `<li>Abono: $${ab.monto.toFixed(2)} (${ab.fecha})</li>`; });
-                    abonosVisual += `</ul>`;
-                }
-
-                const notaExtra = item.nota ? `<p style="margin:8px 0 0 0; font-size: 0.85rem; color: #4b5563; background: #f3f4f6; padding: 6px; border-radius: 4px; border-left: 3px solid #3b82f6;"><strong>Nota:</strong> ${item.nota}</p>` : '';
-                
-                let botonesSub = '';
-                if(saldo > 0) {
-                    botonesSub = `
-                        <div style="display: flex; gap: 6px; margin-top: 8px;">
-                            <button class="btn-abono-sub" data-id="${id}" data-index="${i}" style="flex: 1; background-color: #3b82f6; color: white; border: none; border-radius: 4px; padding: 6px; font-size: 0.8rem; cursor: pointer; font-weight:bold;">💵 Abono</button>
-                            <button class="btn-pagado-sub" data-id="${id}" data-index="${i}" style="flex: 1; background-color: #10b981; color: white; border: none; border-radius: 4px; padding: 6px; font-size: 0.8rem; cursor: pointer; font-weight:bold;">✅ Pagado</button>
-                        </div>
-                    `;
-                } else {
-                    botonesSub = `
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
-                            <p style="color: #10b981; font-weight: bold; font-size: 0.85rem; margin: 0;">✅ Préstamo liquidado</p>
-                            <button class="btn-borrar-sub" data-id="${id}" data-index="${i}" style="background-color: #ef4444; color: white; border: none; border-radius: 4px; padding: 4px 10px; font-size: 0.8rem; cursor: pointer; font-weight:bold;">🗑️ Borrar</button>
-                        </div>
-                    `;
-                }
-
-                detallesHTML += `
-                    <div style="background-color: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; margin-bottom: 8px;">
-                        <p style="margin:0 0 5px 0; font-size: 0.95rem; color: #1e3a8a;"><strong>Préstamo #${i + 1}</strong></p>
-                        <p style="margin:0; font-size: 0.85rem; color: #475569;"><strong>Fecha:</strong> ${item.fechaInicio}</p>
-                        <p style="margin:0 0 5px 0; font-size: 0.85rem; color: #b91c1c;"><strong>A Cancelar:</strong> ${item.fechaFin}</p>
-                        <p style="margin:0; font-size: 0.85rem; color: #333;"><strong>Capital Original:</strong> $${item.montoBase.toFixed(2)} | <strong>Deuda Original:</strong> $${item.montoTotal.toFixed(2)}</p>
-                        <p style="margin:5px 0 0 0; font-size: 0.95rem; color: #b91c1c;"><strong>Saldo Pendiente: $${saldo.toFixed(2)}</strong></p>
-                        ${abonosVisual}
-                        ${notaExtra}
-                        ${botonesSub}
-                    </div>
-                `;
-            });
-        }
-
-        if (totalSaldoGlobal > 0) dineroEnCalle += parseFloat(totalSaldoGlobal);
-        
-        let numLimpio = dato.telefono.replace(/[- ]/g, "");
-        if(numLimpio.startsWith("0")) numLimpio = numLimpio.substring(1);
-        const enlaceWa = `https://wa.me/58${numLimpio}`;
-        const enlaceMapa = dato.ubicacion.startsWith('http') ? dato.ubicacion : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dato.ubicacion)}`;
-
-        let btnPagadoGlobal = '';
-        if (historialActivos === 1 && totalSaldoGlobal > 0) {
-            btnPagadoGlobal = `<button class="btn-pagar-global" data-id="${id}" style="flex: 1; background-color: #10b981; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">✅ Pagado</button>`;
-        }
-        
-        let btnAbonoGlobal = '';
-        if (totalSaldoGlobal > 0) {
-            btnAbonoGlobal = `<button class="btn-abono-global" data-id="${id}" style="flex: 1; background-color: #3b82f6; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">💵 Abono Global</button>`;
-        }
-
-        let textoEstado = totalSaldoGlobal > 0 ? "Deuda activa" : "Pagado";
-
-        listaPrestamosDOM.innerHTML += `
-            <div class="tarjeta-registro" style="border-left: 4px solid #f59e0b;">
-                <h3>${dato.contacto}</h3>
-                <p style="font-size:1.1rem; margin-bottom:5px;"><strong>Total Deuda Pendiente: <span style="color:#b91c1c;">$${totalSaldoGlobal.toFixed(2)}</span></strong></p>
-                <p><strong>Estado:</strong> ${textoEstado} | <strong>Capital Invertido:</strong> $${totalCapitalGlobal.toFixed(2)}</p>
-                <p style="font-size: 0.85rem; color: #64748b; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><strong>Ubi:</strong> ${dato.ubicacion}</p>
-                
-                <button class="btn-ver-detalles" data-target="detalles-${id}" style="width: 100%; background-color: #e2e8f0; color: #334155; border: none; border-radius: 6px; padding: 8px; font-size: 0.9rem; cursor: pointer; margin-top: 10px; font-weight: bold;">Ver Detalles 🔽</button>
-                
-                <div id="detalles-${id}" style="display: none; margin-top: 10px; background-color: #f1f5f9; padding: 10px; border-radius: 6px;">
-                    ${detallesHTML}
-                </div>
-                
-                <div style="display: flex; gap: 8px; margin-top: 15px;">
-                    <a href="${enlaceWa}" target="_blank" style="flex: 1; background-color: #25D366; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">📲 WhatsApp</a>
-                    <a href="${enlaceMapa}" target="_blank" style="flex: 1; background-color: #f59e0b; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">📍 Mapa</a>
-                </div>
-                <div style="display: flex; gap: 8px; margin-top: 8px;">
-                    ${btnAbonoGlobal}
-                    ${btnPagadoGlobal}
-                    <button class="btn-borrar-prestamo" data-id="${id}" style="flex: 1; background-color: #ef4444; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">🗑️ Borrar</button>
-                </div>
-            </div>
-        `;
-    });
-    if (totalDineroCalleDOM) totalDineroCalleDOM.innerText = dineroEnCalle.toFixed(2);
-});
-
-if (listaPrestamosDOM) {
-    listaPrestamosDOM.addEventListener('click', async (e) => {
-        if (e.target.classList.contains('btn-borrar-prestamo')) {
-            if (confirm("¿Seguro de borrar toda la ficha de préstamos de este cliente?")) {
-                await deleteDoc(doc(db, "prestamos", e.target.getAttribute('data-id')));
-            }
-        }
-
-        if (e.target.classList.contains('btn-borrar-sub')) {
-            if (confirm("¿Estás seguro de que deseas eliminar este préstamo específico del historial?")) {
-                const docRef = doc(db, "prestamos", e.target.getAttribute('data-id'));
-                const indexSub = parseInt(e.target.getAttribute('data-index'));
-                
-                const docSnap = await getDoc(docRef);
-                if(docSnap.exists()){
-                    let data = docSnap.data();
-                    data.historial.splice(indexSub, 1);
-                    
-                    if(data.historial.length === 0) {
-                        await deleteDoc(docRef);
-                    } else {
-                        let todosPagados = data.historial.every(h => {
-                            let saldo = h.saldoPendiente !== undefined ? h.saldoPendiente : h.montoTotal;
-                            return saldo === 0;
-                        });
-                        await updateDoc(docRef, { 
-                            historial: data.historial, 
-                            estado: todosPagados ? "Pagado" : "Deuda activa" 
-                        });
-                    }
-                }
-            }
-        }
-        
-        if (e.target.classList.contains('btn-ver-detalles')) {
-            const divDetalles = document.getElementById(e.target.getAttribute('data-target'));
-            if (divDetalles.style.display === 'none') {
-                divDetalles.style.display = 'block';
-                e.target.innerText = 'Ocultar Detalles 🔼';
-            } else {
-                divDetalles.style.display = 'none';
-                e.target.innerText = 'Ver Detalles 🔽';
-            }
-        }
-
-        const procesarPago = async (docId, indexSub, montoAbono, esAbono = true, esGlobal = false) => {
-            const docRef = doc(db, "prestamos", docId);
-            const docSnap = await getDoc(docRef);
-            if(docSnap.exists()){
-                let data = docSnap.data();
-                let hoy = new Date().toLocaleDateString('es-VE');
-
-                if(esGlobal) {
-                    let montoRestante = montoAbono;
-                    data.historial.forEach(h => {
-                        if(h.saldoPendiente === undefined) h.saldoPendiente = h.montoTotal;
-                        let saldo = h.saldoPendiente;
-                        
-                        if(saldo > 0) {
-                            if(!h.abonos) h.abonos = [];
-                            if(esAbono && montoRestante > 0) {
-                                if(montoRestante >= saldo) {
-                                    montoRestante -= saldo;
-                                    h.abonos.push({fecha: hoy, monto: saldo});
-                                    h.saldoPendiente = 0;
-                                    h.estado = "Pagado";
-                                } else {
-                                    h.saldoPendiente = saldo - montoRestante;
-                                    h.abonos.push({fecha: hoy, monto: montoRestante});
-                                    montoRestante = 0;
-                                }
-                            } else if (!esAbono) {
-                                h.abonos.push({fecha: hoy, monto: saldo});
-                                h.saldoPendiente = 0;
-                                h.estado = "Pagado";
-                            }
-                        }
-                    });
-                } else {
-                    let target = data.historial[parseInt(indexSub)];
-                    if(target) {
-                        if(target.saldoPendiente === undefined) target.saldoPendiente = target.montoTotal;
-                        if(!target.abonos) target.abonos = [];
-                        
-                        if(target.saldoPendiente > 0) {
-                            if(esAbono) {
-                                if(montoAbono > target.saldoPendiente) {
-                                    alert(`El abono supera la deuda. Se ajustará al saldo pendiente de $${target.saldoPendiente.toFixed(2)}.`);
-                                    montoAbono = target.saldoPendiente;
-                                }
-                                target.saldoPendiente -= montoAbono;
-                                target.abonos.push({fecha: hoy, monto: montoAbono});
-                                if(target.saldoPendiente <= 0) target.estado = "Pagado";
-                            } else {
-                                target.abonos.push({fecha: hoy, monto: target.saldoPendiente});
-                                target.saldoPendiente = 0;
-                                target.estado = "Pagado";
-                            }
-                        }
-                    }
-                }
-                let todosPagados = data.historial.every(h => h.saldoPendiente === 0);
-                await updateDoc(docRef, { historial: data.historial, estado: todosPagados ? "Pagado" : "Deuda activa" });
-            }
-        };
-
-        if (e.target.classList.contains('btn-abono-global')) {
-            let abono = prompt("Ingresa el monto a abonar a la deuda general:");
-            if(abono !== null && parseFloat(abono) > 0) {
-                await procesarPago(e.target.getAttribute('data-id'), null, parseFloat(abono), true, true);
-            }
-        }
-        
-        if (e.target.classList.contains('btn-pagar-global')) {
-            if (confirm("¿Confirmas que se pagó la deuda completa?")) {
-                await procesarPago(e.target.getAttribute('data-id'), null, null, false, true);
-            }
-        }
-
-        if (e.target.classList.contains('btn-abono-sub')) {
-            let abono = prompt("Ingresa el monto a abonar al préstamo específico:");
-            if(abono !== null && parseFloat(abono) > 0) {
-                await procesarPago(e.target.getAttribute('data-id'), e.target.getAttribute('data-index'), parseFloat(abono), true, false);
-            }
-        }
-
-        if (e.target.classList.contains('btn-pagado-sub')) {
-            if (confirm("¿Confirmas que se liquidó este préstamo específico?")) {
-                await procesarPago(e.target.getAttribute('data-id'), e.target.getAttribute('data-index'), null, false, false);
-            }
-        }
-    });
-}
-
-
-// =========================================================
-// MÓDULO DE CLIENTES (CRM)
-// =========================================================
-const formClientes = document.getElementById('form-clientes');
-const listaClientesDOM = document.getElementById('lista-clientes');
-const datalistContactos = document.getElementById('sugerencias-contactos');
-window.directorioClientes = {}; 
-
-if (formClientes) {
-    const btnCancelarEdicion = document.getElementById('btn-cancelar-edicion');
-    const btnGuardarCliente = document.getElementById('btn-guardar-cliente');
-    const inputEditId = document.getElementById('edit-cliente-id');
-    const inputNombreOriginal = document.getElementById('edit-cliente-nombre-original');
-
-    const resetFormularioClientes = () => {
-        formClientes.reset();
-        inputEditId.value = "";
-        if (inputNombreOriginal) inputNombreOriginal.value = ""; 
-        btnGuardarCliente.innerText = "Guardar Cliente";
-        btnGuardarCliente.style.backgroundColor = "#10b981";
-        if(btnCancelarEdicion) btnCancelarEdicion.style.display = "none";
-    };
-
-    formClientes.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const nombre = document.getElementById('nombre-cliente').value.trim();
-        const telefono = document.getElementById('telefono-cliente').value;
-        const ubicacion = document.getElementById('ubicacion-cliente').value;
-        const editId = inputEditId.value; 
-        const nombreOriginal = inputNombreOriginal ? inputNombreOriginal.value : ""; 
-
-        try {
-            if (editId) {
-                await updateDoc(doc(db, "clientes", editId), { nombre: nombre, telefono: telefono, ubicacion: ubicacion });
-                if (nombreOriginal) {
-                    const qSyncReg = query(collection(db, "registros"), where("contacto", "==", nombreOriginal));
-                    const consultaSyncReg = await getDocs(qSyncReg);
-                    consultaSyncReg.forEach(docRegistro => { updateDoc(doc(db, "registros", docRegistro.id), { contacto: nombre, telefono: telefono, ubicacion: ubicacion }); });
-
-                    const qSyncPres = query(collection(db, "prestamos"), where("contacto", "==", nombreOriginal));
-                    const consultaSyncPres = await getDocs(qSyncPres);
-                    consultaSyncPres.forEach(docPres => { updateDoc(doc(db, "prestamos", docPres.id), { contacto: nombre, telefono: telefono, ubicacion: ubicacion }); });
-                }
-                alert("¡Cliente actualizado!");
-            } else {
-                await addDoc(collection(db, "clientes"), { nombre: nombre, telefono: telefono, ubicacion: ubicacion });
-                alert("¡Cliente guardado exitosamente!");
-            }
-            resetFormularioClientes();
-        } catch (error) { console.error(error); }
-    });
-    if (btnCancelarEdicion) btnCancelarEdicion.addEventListener('click', resetFormularioClientes);
-}
-
-onSnapshot(collection(db, "clientes"), (querySnapshot) => {
-    if (listaClientesDOM) listaClientesDOM.innerHTML = '';
-    let htmlSugerencias = '';
-    window.directorioClientes = {}; 
-
-    querySnapshot.forEach((documento) => {
-        const dato = documento.data();
-        window.directorioClientes[dato.nombre] = { telefono: dato.telefono, ubicacion: dato.ubicacion };
-        htmlSugerencias += `<option value="${dato.nombre}">`;
-
-        let numLimpio = dato.telefono.replace(/[- ]/g, "");
-        if(numLimpio.startsWith("0")) numLimpio = numLimpio.substring(1);
-        const enlaceWa = `https://wa.me/58${numLimpio}`;
-        const enlaceMapa = dato.ubicacion.startsWith('http') ? dato.ubicacion : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dato.ubicacion)}`;
-
-        if (listaClientesDOM) {
-            listaClientesDOM.innerHTML += `
-                <div class="tarjeta-registro">
-                    <h3>${dato.nombre}</h3>
-                    <p><strong>Tel:</strong> ${dato.telefono}</p>
-                    <p style="font-size: 0.85rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><strong>Ubi:</strong> ${dato.ubicacion}</p>
-                    <div style="display: flex; gap: 8px; margin-top: 10px;">
-                        <a href="${enlaceWa}" target="_blank" style="flex: 1; background-color: #25D366; color: white; text-align: center; padding: 6px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.85rem;">📲 WA</a>
-                        <a href="${enlaceMapa}" target="_blank" style="flex: 1; background-color: #f59e0b; color: white; text-align: center; padding: 6px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.85rem;">📍 Mapa</a>
-                    </div>
-                    <div style="display: flex; gap: 8px; margin-top: 8px;">
-                        <button class="btn-editar-cliente" data-id="${documento.id}" data-nombre="${dato.nombre}" data-telefono="${dato.telefono}" data-ubicacion="${dato.ubicacion}" style="flex: 1; background-color: #3b82f6; color: white; border: none; border-radius: 6px; padding: 6px; font-size: 0.85rem; cursor: pointer;">✏️ Editar</button>
-                        <button class="btn-borrar-cliente" data-id="${documento.id}" style="flex: 1; background-color: #ef4444; color: white; border: none; border-radius: 6px; padding: 6px; font-size: 0.85rem; cursor: pointer;">🗑️ Borrar</button>
-                    </div>
-                </div>
-            `;
-        }
-    });
-    if (datalistContactos) datalistContactos.innerHTML = htmlSugerencias;
-});
-
-if (listaClientesDOM) {
-    listaClientesDOM.addEventListener('click', async (e) => {
-        if (e.target.classList.contains('btn-borrar-cliente')) {
-            if (confirm("¿Borrar este cliente del directorio?")) await deleteDoc(doc(db, "clientes", e.target.getAttribute('data-id')));
-        }
-        if (e.target.classList.contains('btn-editar-cliente')) {
-            document.getElementById('edit-cliente-id').value = e.target.getAttribute('data-id');
-            if (document.getElementById('edit-cliente-nombre-original')) document.getElementById('edit-cliente-nombre-original').value = e.target.getAttribute('data-nombre');
-            document.getElementById('nombre-cliente').value = e.target.getAttribute('data-nombre');
-            document.getElementById('telefono-cliente').value = e.target.getAttribute('data-telefono');
-            document.getElementById('ubicacion-cliente').value = e.target.getAttribute('data-ubicacion');
-            document.getElementById('btn-guardar-cliente').innerText = "Actualizar Cliente";
-            document.getElementById('btn-guardar-cliente').style.backgroundColor = "#3b82f6";
-            const btnCancel = document.getElementById('btn-cancelar-edicion');
-            if(btnCancel) btnCancel.style.display = "block";
-            document.getElementById('form-clientes').scrollIntoView({ behavior: 'smooth' });
-        }
-    });
-}
-
-// Autocompletado de formularios
-const inputContacto = document.getElementById('contacto');
-if (inputContacto) {
-    inputContacto.addEventListener('input', (e) => {
-        const nom = e.target.value;
-        if (window.directorioClientes && window.directorioClientes[nom]) {
-            document.getElementById('telefono').value = window.directorioClientes[nom].telefono;
-            document.getElementById('ubicacion').value = window.directorioClientes[nom].ubicacion;
-        }
-    });
-}
-
-const inputContactoPrestamo = document.getElementById('contacto-prestamo');
-if (inputContactoPrestamo) {
-    inputContactoPrestamo.addEventListener('input', (e) => {
-        const nom = e.target.value;
-        if (window.directorioClientes && window.directorioClientes[nom]) {
-            document.getElementById('telefono-prestamo').value = window.directorioClientes[nom].telefono;
-            document.getElementById('ubicacion-prestamo').value = window.directorioClientes[nom].ubicacion;
-        }
-    });
-}
-
-// =========================================================
-// SISTEMA DE BÚSQUEDA EN VIVO
-// =========================================================
-const configurarBuscador = (inputElement, selectorTarjetas) => {
-    if (inputElement) {
-        inputElement.addEventListener('input', (e) => {
-            const textoBusqueda = e.target.value.toLowerCase();
-            document.querySelectorAll(selectorTarjetas).forEach(tarjeta => {
-                tarjeta.style.display = tarjeta.innerText.toLowerCase().includes(textoBusqueda) ? 'block' : 'none';
-            });
-        });
-    }
-};
-
-configurarBuscador(document.getElementById('buscador-registros'), '#lista-registros .tarjeta-registro');
-configurarBuscador(document.getElementById('buscador-clientes'), '#lista-clientes .tarjeta-registro');
-configurarBuscador(document.getElementById('buscador-prestamos'), '#lista-prestamos .tarjeta-registro');
