@@ -196,18 +196,23 @@
         </div>
     </div>
 
-<!-- VENTANA FLOTANTE DE BLOQUEO (PARA PRÉSTAMOS Y CLIENTES) -->
+<!-- VENTANA FLOTANTE DE BLOQUEO (BIOMETRÍA PRIMERO, PIN DE RESPALDO) -->
     <div id="modal-bloqueo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 9999; padding: 20px; box-sizing: border-box;">
         <div style="background-color: #1e293b; padding: 30px; border-radius: 16px; width: 100%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); color: white;">
             <div style="font-size: 3rem; margin-bottom: 10px;">🔐</div>
             <h3 id="titulo-modal-seguridad" style="margin: 0 0 5px 0; color: #f8fafc;">Área Protegida</h3>
-            <p id="mensaje-bloqueo" style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;">Ingresa tu PIN para acceder</p>
+            <p id="mensaje-bloqueo" style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;">Verificando identidad...</p>
             
-            <input type="password" id="input-pin" maxlength="4" inputmode="numeric" placeholder="••••" style="width: 100%; padding: 15px; font-size: 1.8rem; text-align: center; letter-spacing: 12px; border-radius: 10px; border: 2px solid #334155; background-color: #0f172a; color: white; margin-bottom: 15px; box-sizing: border-box;">
+            <!-- VISTA DE PIN (OCULTA POR DEFECTO HASTA QUE SE PULSE USAR PIN) -->
+            <div id="caja-modo-pin" style="display: none;">
+                <input type="password" id="input-pin" maxlength="4" inputmode="numeric" placeholder="••••" style="width: 100%; padding: 15px; font-size: 1.8rem; text-align: center; letter-spacing: 12px; border-radius: 10px; border: 2px solid #334155; background-color: #0f172a; color: white; margin-bottom: 15px; box-sizing: border-box;">
+                <button id="btn-desbloquear-pin" style="width: 100%; padding: 14px; background-color: #3b82f6; color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-bottom: 10px;">Confirmar PIN</button>
+            </div>
+
+            <!-- BOTONES DE ACCIÓN RÁPIDA -->
+            <button id="btn-reintentar-bio" style="width: 100%; padding: 14px; background-color: #10b981; color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-bottom: 10px;">👆 Reintentar Huella / Face ID</button>
             
-            <button id="btn-desbloquear-pin" style="width: 100%; padding: 14px; background-color: #3b82f6; color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-bottom: 10px;">Desbloquear</button>
-            
-            <button id="btn-biometria" style="width: 100%; padding: 14px; background-color: #10b981; color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; display: none; margin-bottom: 10px;">👆 Usar Huella / Face ID</button>
+            <button id="btn-usar-pin" style="width: 100%; padding: 12px; background-color: #475569; color: white; border: none; border-radius: 10px; font-size: 0.9rem; font-weight: bold; cursor: pointer; margin-bottom: 10px;">🔢 Ingresar con PIN en su lugar</button>
             
             <button id="btn-cancelar-bloqueo" style="width: 100%; padding: 10px; background-color: transparent; color: #94a3b8; border: 1px solid #475569; border-radius: 8px; font-size: 0.85rem; cursor: pointer;">Cancelar</button>
         </div>
