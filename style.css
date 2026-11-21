@@ -5,7 +5,7 @@
     --bg-card: #161424;
     --bg-card-hover: #1e1b30;
     --bg-input: #100e1c;
-    --border-subtle: rgba(167, 139, 250, 0.16);
+    --border-subtle: rgba(167, 139, 250, 0.18);
     --accent-purple: #8b5cf6;
     --accent-lavender: #c4b5fd;
     --accent-gradient: linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%);
@@ -22,11 +22,16 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+html, body {
+    width: 100%;
+    overflow-x: hidden;
+}
+
 body {
     background-color: var(--bg-dark);
     background-image: 
-        radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.18) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+        radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.20) 0%, transparent 52%),
+        radial-gradient(circle at 85% 80%, rgba(59, 130, 246, 0.10) 0%, transparent 45%);
     color: var(--text-main);
     margin: 0;
     padding: 0;
@@ -41,7 +46,7 @@ body {
     width: 100%;
     max-width: 440px;
     min-height: 100vh;
-    padding: 32px 22px;
+    padding: 32px 20px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -79,7 +84,7 @@ body {
     color: var(--text-muted);
 }
 
-/* Tarjeta Hero Morada (Inspirada en la pantalla central de la referencia) */
+/* Tarjeta Hero Morada */
 .hero-card-fintech {
     background: linear-gradient(135deg, #6d28d9 0%, #4f46e5 55%, #2563eb 100%);
     border-radius: 24px;
@@ -107,12 +112,12 @@ body {
     font-size: 0.82rem;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.82);
     font-weight: 600;
 }
 
 .hero-title {
-    font-size: 1.45rem;
+    font-size: 1.4rem;
     font-weight: 700;
     margin: 8px 0 16px 0;
     color: #ffffff;
@@ -121,6 +126,7 @@ body {
 .hero-pills {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
 }
 
 .hero-pill {
@@ -133,7 +139,7 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-/* Botones de Acceso Rápido (Quick Access) */
+/* Botones de Acceso Rápido */
 .section-label {
     font-size: 0.85rem;
     font-weight: 600;
@@ -212,20 +218,30 @@ body {
     justify-content: center;
     color: var(--accent-lavender);
     font-size: 0.9rem;
+    flex-shrink: 0;
 }
 
-/* --- VISTAS INTERNAS (COMPRAS, PRÉSTAMOS, CLIENTES) --- */
+/* --- VISTAS INTERNAS (DIVISAS, PRÉSTAMOS, CLIENTES) --- */
 #app-principal, #app-prestamo, #app-clientes {
     width: 100%;
     max-width: 480px;
-    padding: 20px 18px 50px 18px;
+    padding: 20px 16px 56px 16px;
 }
 
 .top-bar-interna {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
     margin-bottom: 20px;
+}
+
+.top-bar-interna h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-align: right;
 }
 
 #btn-volver, #btn-volver-prestamo, #btn-volver-clientes {
@@ -233,20 +249,14 @@ body {
     color: var(--text-main);
     border: 1px solid var(--border-subtle);
     border-radius: 14px;
-    padding: 10px 16px;
-    font-size: 0.9rem;
+    padding: 10px 15px;
+    font-size: 0.88rem;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-}
-
-h2 {
-    font-size: 1.35rem;
-    font-weight: 700;
-    margin: 0 0 16px 0;
-    color: #ffffff;
+    flex-shrink: 0;
 }
 
 /* Formularios y Cajas */
@@ -255,7 +265,7 @@ form {
     border: 1px solid var(--border-subtle);
     border-radius: 22px;
     padding: 20px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
@@ -265,10 +275,10 @@ label {
     font-weight: 500;
     color: var(--text-muted);
     margin-bottom: 6px;
-    margin-top: 12px;
+    margin-top: 13px;
 }
 
-label:first-child {
+form > label:first-child {
     margin-top: 0;
 }
 
@@ -280,21 +290,32 @@ input[type="password"],
 select,
 textarea {
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
     background: var(--bg-input);
     border: 1px solid var(--border-subtle);
     border-radius: 14px;
     padding: 13px 14px;
+    min-height: 48px;
     color: #ffffff;
     font-size: 0.95rem;
     outline: none;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    color-scheme: dark;
 }
 
 input:focus, select:focus, textarea:focus {
     border-color: var(--accent-purple);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
 }
 
-/* Botón Principal Estilo Lavanda/Púrpura de la referencia */
+/* Botón Principal de Envío */
 form button[type="submit"] {
     width: 100%;
     margin-top: 20px;
@@ -314,37 +335,39 @@ form button[type="submit"]:active {
     transform: scale(0.98);
 }
 
-/* Banner de Totales (Dinero en la calle / Total pendiente) */
+/* Banner de Totales */
 .banner-total-fintech {
     background: linear-gradient(135deg, #4c1d95 0%, #312e81 100%);
     border: 1px solid rgba(196, 181, 253, 0.25);
     border-radius: 18px;
-    padding: 16px 18px;
+    padding: 15px 18px;
     margin-bottom: 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
     box-shadow: 0 10px 25px rgba(76, 29, 149, 0.3);
 }
 
 .banner-total-fintech span {
     color: #ffffff;
     font-weight: 700;
-    font-size: 1.05rem;
+    font-size: 1.03rem;
 }
 
 /* Buscadores */
 #buscador-registros, #buscador-prestamos, #buscador-clientes {
-    margin-bottom: 18px;
+    margin-bottom: 16px;
     background: var(--bg-card);
     border-radius: 16px;
-    padding: 14px 16px;
+    padding: 13px 15px;
 }
 
 /* Tarjetas de Registros / Préstamos / Clientes */
 .tarjeta-registro {
     background: var(--bg-card) !important;
     border: 1px solid var(--border-subtle) !important;
+    border-left: 4px solid var(--accent-purple) !important;
     border-radius: 20px !important;
     padding: 18px !important;
     margin-bottom: 14px !important;
@@ -369,17 +392,90 @@ form button[type="submit"]:active {
     color: #f8fafc;
 }
 
+/* Caja de Nota Oscura Legible en Préstamos */
+.tarjeta-registro p[style*="background: #f3f4f6"],
+div[id^="detalles-"] p[style*="background: #f3f4f6"] {
+    background: rgba(139, 92, 246, 0.12) !important;
+    color: #e2e8f0 !important;
+    border-left: 3px solid var(--accent-purple) !important;
+    border-radius: 10px !important;
+    padding: 8px 10px !important;
+}
+
+/* --- ARMONÍA DE BOTONES ESTILO REYES EXCHANGE --- */
+.tarjeta-registro a,
+.tarjeta-registro button {
+    background: rgba(139, 92, 246, 0.14) !important;
+    color: #ede9fe !important;
+    border: 1px solid rgba(167, 139, 250, 0.28) !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+    transition: transform 0.12s ease, opacity 0.15s ease;
+}
+
+.tarjeta-registro a:active,
+.tarjeta-registro button:active {
+    transform: scale(0.97);
+    opacity: 0.92;
+}
+
+/* Botones principales de acción / pago / abono con gradiente violeta-índigo */
+.tarjeta-registro .btn-pagado,
+.tarjeta-registro .btn-pagado-sub,
+.tarjeta-registro .btn-pagar-global,
+.tarjeta-registro .btn-abono-sub,
+.tarjeta-registro .btn-abono-global,
+.tarjeta-registro .btn-editar-cliente {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.75) 0%, rgba(79, 70, 229, 0.75) 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(196, 181, 253, 0.35) !important;
+}
+
+/* Botón editar préstamo en tono lavanda suave oscuro */
+.tarjeta-registro .btn-editar-sub {
+    background: rgba(167, 139, 250, 0.18) !important;
+    color: #ddd6fe !important;
+    border: 1px solid rgba(167, 139, 250, 0.35) !important;
+}
+
+/* Botones WhatsApp y Mapa en tono oscuro sutil con acento lavanda */
+.tarjeta-registro a[href*="wa.me"],
+.tarjeta-registro a[href*="google.com/maps"],
+.tarjeta-registro a[href*="maps.app.goo.gl"] {
+    background: rgba(30, 27, 48, 0.9) !important;
+    color: #c4b5fd !important;
+    border: 1px solid rgba(139, 92, 246, 0.25) !important;
+}
+
+/* Botones de borrar en tono oscuro con borde rosado/rojizo apagado */
+.tarjeta-registro .btn-borrar,
+.tarjeta-registro .btn-borrar-prestamo,
+.tarjeta-registro .btn-borrar-sub,
+.tarjeta-registro .btn-borrar-cliente {
+    background: rgba(127, 29, 29, 0.28) !important;
+    color: #fca5a5 !important;
+    border: 1px solid rgba(248, 113, 113, 0.25) !important;
+}
+
+/* Botón Ver / Ocultar detalles */
+.tarjeta-registro .btn-ver-detalles {
+    background: rgba(16, 14, 28, 0.85) !important;
+    color: #c4b5fd !important;
+    border: 1px solid rgba(167, 139, 250, 0.22) !important;
+}
+
 /* Sub-tarjetas dentro de historial de préstamos */
 div[id^="detalles-"] {
     background-color: var(--bg-input) !important;
     border: 1px solid var(--border-subtle);
-    border-radius: 14px !important;
+    border-radius: 16px !important;
 }
 
 div[id^="detalles-"] > div {
     background-color: var(--bg-card) !important;
     border: 1px solid var(--border-subtle) !important;
-    border-radius: 12px !important;
+    border-radius: 14px !important;
     color: var(--text-main) !important;
 }
 

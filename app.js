@@ -484,11 +484,11 @@ onSnapshot(collection(db, "prestamos"), (querySnapshot) => {
                         <a href="${enlaceWa}" target="_blank" style="flex: 1; background-color: #25D366; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">📲 WhatsApp</a>
                         <a href="${enlaceMapa}" target="_blank" style="flex: 1; background-color: #f59e0b; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">📍 Mapa</a>
                     </div>
-                    <div style="display: flex; gap: 8px; margin-top: 8px;">
-                        <button class="btn-abono-sub" data-id="${id}" data-index="0" style="flex: 1; background-color: #3b82f6; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">💵 Abono</button>
-                        <button class="btn-pagado-sub" data-id="${id}" data-index="0" style="flex: 1; background-color: #10b981; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">✅ Pagado</button>
-                        <button class="btn-editar-sub" data-id="${id}" data-index="0" style="flex: 1; background-color: #8b5cf6; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; font-weight:bold;">✏️ Editar</button>
-                        <button class="btn-borrar-prestamo" data-id="${id}" style="background-color: #ef4444; color: white; border: none; border-radius: 6px; padding: 8px 12px; cursor: pointer; font-weight:bold;">🗑️</button>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+                     <button class="btn-abono-sub" data-id="${id}" data-index="0" style="flex: 1 1 30%; background-color: #3b82f6; color: white; border: none; padding: 9px; cursor: pointer;">💵 Abono</button>
+                     <button class="btn-pagado-sub" data-id="${id}" data-index="0" style="flex: 1 1 30%; background-color: #10b981; color: white; border: none; padding: 9px; cursor: pointer;">✅ Pagado</button>
+                     <button class="btn-editar-sub" data-id="${id}" data-index="0" style="flex: 1 1 30%; background-color: #8b5cf6; color: white; border: none; padding: 9px; cursor: pointer;">✏️ Editar</button>
+                     <button class="btn-borrar-prestamo" data-id="${id}" style="width: 100%; background-color: #ef4444; color: white; border: none; padding: 8px; cursor: pointer;">🗑️ Borrar Préstamo</button>
                     </div>
                 </div>
             `;
