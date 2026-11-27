@@ -58,6 +58,88 @@ if (btnToggleVisibilidad) {
     };
 }
 
+// --- FUNCIONES DE RECORDATORIOS Y VENCIMIENTOS (ANDROID - REYES EXCHANGE) ---
+function obtenerFechaHoyLocal() {
+    const hoy = new Date();
+    const y = hoy.getFullYear();
+    const m = String(hoy.getMonth() + 1).padStart(2, '0');
+    const d = String(hoy.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function crearEnlaceCalendario(contacto, telefono, saldo, fechaFin, nota) {
+    const fechaLimpia = (fechaFin || obtenerFechaHoyLocal()).replace(/-/g, '');
+    const titulo = encodeURIComponent(`Cobro Reyes Exchange: ${contacto} ($${Number(saldo).toFixed(2)})`);
+    const detalles = encodeURIComponent(
+        `Cliente: ${contacto}\nTeléfono: ${telefono || 'N/A'}\nSaldo pendiente: $${Number(saldo).toFixed(2)}${nota ? `\nNota: ${nota}` : ''}`
+    );
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${titulo}&dates=${fechaLimpia}T090000/${fechaLimpia}T093000&details=${detalles}`;
+}
+
+function actualizarBannerVencimientos(prestamosDocs) {
+    const banner = document.getElementById('banner-vencimientos');
+    if (!banner) return;
+
+    const hoyStr = obtenerFechaHoyLocal();
+    const alertas = [];
+
+    prestamosDocs.forEach((docSnap) => {
+        const dato = docSnap.data();
+        const historial = dato.historial || [];
+        historial.forEach((item) => {
+            const saldo = item.saldoPendiente !== undefined ? Number(item.saldoPendiente) : Number(item.montoTotal || 0);
+            if (item.estado !== 'Pagado' && saldo > 0 && item.fechaFin) {
+                if (item.fechaFin < hoyStr) {
+                    alertas.push({ tipo: 'VENCIDO', contacto: dato.contacto, telefono: dato.telefono, saldo, fechaFin: item.fechaFin });
+                } else if (item.fechaFin === hoyStr) {
+                    alertas.push({ tipo: 'HOY', contacto: dato.contacto, telefono: dato.telefono, saldo, fechaFin: item.fechaFin });
+                }
+            }
+        });
+    });
+
+    if (alertas.length === 0) {
+        banner.style.display = 'none';
+        banner.innerHTML = '';
+        return;
+    }
+
+    banner.style.display = 'block';
+    const itemsHtml = alertas.map((a) => {
+        const telLimpio = (a.telefono || '').replace(/\D/g, '');
+        const msgWa = encodeURIComponent(`Hola ${a.contacto}, te recordamos tu saldo pendiente de $${a.saldo.toFixed(2)} en Reyes Exchange (fecha límite: ${a.fechaFin}).`);
+        const linkWa = telLimpio ? `https://wa.me/58${telLimpio.replace(/^0/, '')}?text=${msgWa}` : '#';
+        const badgeColor = a.tipo === 'VENCIDO' ? '#f87171' : '#fbbf24';
+        return `
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.08);">
+                <div style="font-size: 0.85rem;">
+                    <strong style="color: ${badgeColor};">[${a.tipo}]</strong> <strong>${a.contacto}</strong> — $${a.saldo.toFixed(2)} <span style="color:#cbd5e1;">(${a.fechaFin})</span>
+                </div>
+                <a href="${linkWa}" target="_blank" style="background: rgba(139,92,246,0.25); color: #ede9fe; border: 1px solid rgba(167,139,250,0.35); border-radius: 10px; padding: 5px 10px; font-size: 0.78rem; text-decoration: none; font-weight: 600; flex-shrink: 0;">📲 Cobrar</a>
+            </div>
+        `;
+    }).join('');
+
+    banner.innerHTML = `
+        <div style="font-weight: 700; font-size: 0.92rem; margin-bottom: 6px; color: #ffffff;">
+            🔔 Alertas de Cobro (${alertas.length})
+        </div>
+        ${itemsHtml}
+    `;
+
+    if ('Notification' in window) {
+        if (Notification.permission === 'granted' && !window.__notificacionVencimientosMostrada) {
+            window.__notificacionVencimientosMostrada = true;
+            new Notification('Reyes Exchange - Cobros pendientes', {
+                body: `Tienes ${alertas.length} préstamo(s) vencido(s) o por vencer hoy.`,
+                icon: 'icono.jpg'
+            });
+        } else if (Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    }
+}
+
 // --- EVENTOS DE MENÚ PRINCIPAL ---
 if(btnCompra) {
     btnCompra.onclick = () => {
@@ -374,6 +456,7 @@ const listaPrestamosDOM = document.getElementById('lista-prestamos');
 
 onSnapshot(collection(db, "prestamos"), (querySnapshot) => {
     if(!listaPrestamosDOM) return;
+    actualizarBannerVencimientos(querySnapshot.docs);
     listaPrestamosDOM.innerHTML = '';
     let dineroEnCalle = 0;
 
@@ -405,6 +488,7 @@ onSnapshot(collection(db, "prestamos"), (querySnapshot) => {
                 }
 
                 const notaExtra = item.nota ? `<p style="margin:8px 0 0 0; font-size: 0.85rem; color: #4b5563; background: #f3f4f6; padding: 6px; border-radius: 4px; border-left: 3px solid #3b82f6;"><strong>Nota:</strong> ${item.nota}</p>` : '';
+                const linkCalendarioSub = crearEnlaceCalendario(dato.contacto, dato.telefono, saldo, item.fechaFin, item.nota);
                 
                 let botonesSub = '';
                 let btnEditarSub = `<button class="btn-editar-sub" data-id="${id}" data-index="${i}" style="background-color: #8b5cf6; color: white; border: none; border-radius: 6px; padding: 8px; font-size: 0.9rem; cursor: pointer; font-weight:bold; flex: 1;">✏️ Editar</button>`;
@@ -417,6 +501,9 @@ onSnapshot(collection(db, "prestamos"), (querySnapshot) => {
                             ${btnAbonoSub}
                             ${btnPagadoSub}
                             ${btnEditarSub}
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <a href="${linkCalendarioSub}" target="_blank" style="display: block; text-align: center; padding: 7px 10px; text-decoration: none; font-size: 0.84rem;">📅 Agendar</a>
                         </div>
                     `;
                 } else {
@@ -469,6 +556,7 @@ onSnapshot(collection(db, "prestamos"), (querySnapshot) => {
             }
 
             let notaExtraUnica = itemUnico.nota ? `<p style="margin:8px 0 0 0; font-size: 0.85rem; color: #4b5563; background: #f3f4f6; padding: 6px; border-radius: 4px; border-left: 3px solid #3b82f6;"><strong>Nota:</strong> ${itemUnico.nota}</p>` : '';
+            const linkCalendario = crearEnlaceCalendario(dato.contacto, dato.telefono, saldoUnico, itemUnico.fechaFin, itemUnico.nota);
 
             listaPrestamosDOM.innerHTML += `
                 <div class="tarjeta-registro" style="border-left: 4px solid #f59e0b;">
@@ -481,8 +569,9 @@ onSnapshot(collection(db, "prestamos"), (querySnapshot) => {
                     <p style="font-size: 0.85rem; color: #64748b; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><strong>Ubi:</strong> ${dato.ubicacion}</p>
                     
                     <div style="display: flex; gap: 8px; margin-top: 15px;">
-                        <a href="${enlaceWa}" target="_blank" style="flex: 1; background-color: #25D366; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">📲 WhatsApp</a>
-                        <a href="${enlaceMapa}" target="_blank" style="flex: 1; background-color: #f59e0b; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">📍 Mapa</a>
+                        <a href="${enlaceWa}" target="_blank" style="flex: 1; background-color: #25D366; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.85rem;">📲 WA</a>
+                        <a href="${enlaceMapa}" target="_blank" style="flex: 1; background-color: #f59e0b; color: white; text-align: center; padding: 8px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.85rem;">📍 Mapa</a>
+                        <a href="${linkCalendario}" target="_blank" style="flex: 1; text-align: center; padding: 8px; text-decoration: none; font-size: 0.85rem;">📅 Agendar</a>
                     </div>
                     <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
                      <button class="btn-abono-sub" data-id="${id}" data-index="0" style="flex: 1 1 30%; background-color: #3b82f6; color: white; border: none; padding: 9px; cursor: pointer;">💵 Abono</button>
